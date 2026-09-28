@@ -1,0 +1,13 @@
+# Certificati dell'app: si scaricano da https://github.com/markoceri/leapmotor-certs
+lambda/app.crt
+lambda/app.key
+lambda/app_crt.pem
+lambda/app_key.pem
+
+# Prodotti in locale
+*.zip
+ultimo_stato.json
+__pycache__/
+*.pyc
+.venv/
+venv/

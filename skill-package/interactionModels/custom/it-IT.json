@@ -1,0 +1,113 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "mia lippina",
+      "intents": [
+        {
+          "name": "BatteriaIntent",
+          "slots": [],
+          "samples": [
+            "quanto è carica",
+            "quanto è carica l'auto",
+            "quanto è carica la macchina",
+            "quanto è carica la batteria",
+            "quanta batteria ha",
+            "quanta batteria c'è",
+            "quanta batteria resta",
+            "quanta carica ha",
+            "qual è il livello della batteria",
+            "qual è il livello di carica",
+            "livello batteria",
+            "stato della batteria",
+            "stato della carica",
+            "che autonomia ha",
+            "quanta autonomia ha",
+            "quanta autonomia resta",
+            "quanti chilometri ha",
+            "quanti chilometri posso fare",
+            "quanti chilometri di autonomia ha",
+            "è in carica",
+            "sta caricando",
+            "a che punto è la ricarica",
+            "quando finisce la ricarica",
+            "è carica"
+          ]
+        },
+        {
+          "name": "PosizioneIntent",
+          "slots": [],
+          "samples": [
+            "dove si trova",
+            "dove si trova l'auto",
+            "dove si trova la macchina",
+            "dov'è",
+            "dov'è l'auto",
+            "dov'è la macchina",
+            "dove sta la macchina",
+            "dove è parcheggiata",
+            "dove l'ho parcheggiata",
+            "dove ho parcheggiato",
+            "dove ho lasciato la macchina",
+            "dove ho lasciato l'auto",
+            "qual è la posizione",
+            "la posizione dell'auto",
+            "la posizione della macchina",
+            "in che posizione è",
+            "dove è l'auto",
+            "dove è la macchina"
+          ]
+        },
+        {
+          "name": "AnomalieIntent",
+          "slots": [],
+          "samples": [
+            "ci sono anomalie",
+            "ci sono problemi",
+            "ci sono avvisi",
+            "è tutto a posto",
+            "è tutto ok",
+            "va tutto bene",
+            "è tutto chiuso",
+            "è chiusa",
+            "è chiusa a chiave",
+            "l'ho chiusa",
+            "ho chiuso la macchina",
+            "ho chiuso l'auto",
+            "ci sono finestrini aperti",
+            "ho lasciato un finestrino aperto",
+            "ci sono portiere aperte",
+            "i finestrini sono chiusi",
+            "le portiere sono chiuse",
+            "il baule è chiuso",
+            "controlla l'auto",
+            "controlla la macchina",
+            "come sono le gomme"
+          ]
+        },
+        {
+          "name": "RiepilogoIntent",
+          "slots": [],
+          "samples": [
+            "come sta",
+            "come sta l'auto",
+            "come sta la macchina",
+            "dammi lo stato",
+            "lo stato dell'auto",
+            "lo stato della macchina",
+            "stato completo",
+            "fammi un riepilogo",
+            "un riepilogo",
+            "dimmi tutto",
+            "novità"
+          ]
+        },
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] },
+        { "name": "AMAZON.NavigateHomeIntent", "samples": [] },
+        { "name": "AMAZON.FallbackIntent", "samples": [] }
+      ],
+      "types": []
+    }
+  }
+}
