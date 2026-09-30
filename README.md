@@ -1,5 +1,7 @@
 # Leapmotor per Alexa
 
+**Italiano** · [English](README.en.md) · [Español](README.es.md)
+
 Skill Alexa **personale** per chiedere a voce lo stato della tua Leapmotor e darle qualche comando. Parla **italiano, inglese e spagnolo**.
 
 | Chiedi | Alexa risponde |

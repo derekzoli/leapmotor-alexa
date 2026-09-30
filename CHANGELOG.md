@@ -1,5 +1,10 @@
 # Note degli aggiornamenti
 
+## 1.2.1 — 30 settembre 2026
+
+- **Guide di installazione in inglese e spagnolo**: [README.en.md](README.en.md) e [README.es.md](README.es.md), con le risposte e i messaggi d'errore che Alexa dice davvero in quella lingua.
+- Modello spagnolo: aggiunte *"si hay ventanillas abiertas"*, *"si hay alguna ventanilla abierta"*, *"si hay alguna puerta abierta"*. Per averle, ricarica `es-ES.json` nel JSON Editor della lingua spagnola → **Save** → **Build skill**. Il codice non cambia.
+
 ## 1.2 — 30 settembre 2026
 
 ### Novità

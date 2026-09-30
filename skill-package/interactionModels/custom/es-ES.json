@@ -71,7 +71,10 @@
             "si está todo en orden",
             "si está cerrado",
             "si está cerrado con llave",
-            "si hay algún problema"
+            "si hay algún problema",
+            "si hay ventanillas abiertas",
+            "si hay alguna ventanilla abierta",
+            "si hay alguna puerta abierta"
           ]
         },
         {
