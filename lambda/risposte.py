@@ -1,8 +1,9 @@
 """
 Dallo stato grezzo del cloud alle frasi che Alexa pronuncia.
 
-Tutto qui dentro e' puro (niente rete): si prova in locale con uno stato
-salvato, senza account ne' Alexa.
+Qui c'e' la lettura dello stato e cio' che non dipende dalla lingua; le frasi
+stanno in lingua_it.py, lingua_en.py e lingua_es.py. Tutto puro (niente rete):
+si prova in locale con uno stato salvato, senza account ne' Alexa.
 """
 
 import math
@@ -10,16 +11,15 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 
+import comune
+import lingue
+import lingua_it
+
 # Oltre quest'eta' il dato viene dichiarato: se l'auto e' ferma da giorni,
 # "e' chiusa" vale per l'ultima volta che si e' fatta sentire.
 DATO_VECCHIO_ORE = 6
 
-RUOTE = [
-    ("anteriore sinistra", "leftFrontTirePressure"),
-    ("anteriore destra", "rightFrontTirePressure"),
-    ("posteriore sinistra", "leftRearTirePressure"),
-    ("posteriore destra", "rightRearTirePressure"),
-]
+RUOTE = comune.RUOTE
 
 
 class Stato:
@@ -123,103 +123,38 @@ def _to_int(v):
     return None if v is None else int(round(v))
 
 
-# ---- Ora italiana senza dipendenze (su Lambda il database dei fusi non e' garantito) ----
+# ---- Ora locale senza dipendenze (su Lambda il database dei fusi non e' garantito) ----
 
 def _ultima_domenica(anno, mese):
     giorno = datetime(anno, mese + 1, 1) - timedelta(days=1) if mese < 12 else datetime(anno, 12, 31)
     return giorno - timedelta(days=(giorno.weekday() + 1) % 7)
 
 
-def ora_italiana(ms):
+def ora_locale(ms, fuso_ore=1):
+    """
+    Ora solare `fuso_ore` (1 = Italia e Spagna, 0 = Regno Unito e Portogallo)
+    piu' l'ora legale europea: dall'ultima domenica di marzo all'ultima di
+    ottobre, alle 01:00 UTC, uguale in tutta l'Unione e nel Regno Unito.
+    """
     utc = datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc).replace(tzinfo=None)
     inizio = _ultima_domenica(utc.year, 3).replace(hour=1)
     fine = _ultima_domenica(utc.year, 10).replace(hour=1)
-    return utc + timedelta(hours=2 if inizio <= utc < fine else 1)
+    return utc + timedelta(hours=fuso_ore + (1 if inizio <= utc < fine else 0))
 
 
-# ---- Frasi ------------------------------------------------------------------------
-
-def _durata(minuti):
-    ore, mins = divmod(minuti, 60)
-    parti = []
-    if ore:
-        parti.append("un'ora" if ore == 1 else "%d ore" % ore)
-    if mins or not ore:
-        parti.append("un minuto" if mins == 1 else "%d minuti" % mins)
-    return " e ".join(parti)
+def ora_italiana(ms):
+    return ora_locale(ms, 1)
 
 
-def nota_eta_dato(s, adesso_ms=None):
-    """Frase sull'ultimo contatto con l'auto, solo se il dato e' vecchio."""
-    if not s.rilevato_ms:
-        return ""
-    adesso_ms = adesso_ms or int(time.time() * 1000)
-    if adesso_ms - s.rilevato_ms < DATO_VECCHIO_ORE * 3600 * 1000:
-        return ""
-    quando = ora_italiana(s.rilevato_ms)
-    oggi = ora_italiana(adesso_ms).date()
-    orario = "%d e %02d" % (quando.hour, quando.minute) if quando.minute else "%d" % quando.hour
-    if quando.date() == oggi:
-        giorno = "di oggi"
-    elif quando.date() == oggi - timedelta(days=1):
-        giorno = "di ieri"
-    else:
-        giorno = "del %d %s" % (quando.day, MESI[quando.month - 1])
-    return "L'ultimo contatto con l'auto è %s alle %s." % (giorno, orario)
+# ---- Utilita' comuni ------------------------------------------------------------------
+
+al_percento = lingua_it.al_percento  # compatibilita' con i test
 
 
-MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio",
-        "agosto", "settembre", "ottobre", "novembre", "dicembre"]
-
-
-def al_percento(n):
-    """ "al 50 per cento", ma "all'80 per cento": l'articolo segue il suono del numero."""
-    vocale = n in (1, 8, 11) or 80 <= n <= 89
-    return ("all'%d per cento" if vocale else "al %d per cento") % n
-
-
-def cap(testo):
-    return testo[:1].upper() + testo[1:]
-
-
-def soggetto(nome):
-    """Il nome dell'auto, o "l'auto". Sempre al femminile, come in italiano
-    si fa con le auto anche quando il nome e' di marca ("la Ferrari")."""
-    return nome or "l'auto"
-
-
-def a_soggetto(nome):
-    """ "all'auto", "a Elettra Lamborghini", "ad Alba"."""
-    if not nome:
-        return "all'auto"
-    return ("ad " if nome[:1].lower() == "a" else "a ") + nome
-
-
-def frase_batteria(s, nome=None):
-    if s.soc is None:
-        return "Non ricevo il livello della batteria dall'auto."
-    if nome:
-        frase = "%s è carica %s" % (nome, al_percento(s.soc))
-        if s.autonomia_km:
-            frase += ", con circa %d chilometri di autonomia" % s.autonomia_km
-    else:
-        frase = "La batteria è " + al_percento(s.soc)
-        if s.autonomia_km:
-            frase += ", circa %d chilometri di autonomia" % s.autonomia_km
-    frase += "."
-    if s.in_carica:
-        frase += " È in carica"
-        if s.minuti_a_fine_carica:
-            frase += " e finisce tra circa %s" % _durata(s.minuti_a_fine_carica)
-            if s.limite_carica:
-                frase += ", " + al_percento(s.limite_carica)
-        frase += "."
-    elif s.cavo_collegato:
-        frase += " Il cavo è collegato ma non sta caricando"
-        if s.limite_carica and s.soc >= s.limite_carica:
-            frase += ": ha raggiunto il limite impostato"
-        frase += "."
-    return frase
+def nome_parlato(nome):
+    """"ElettraLamborghini" -> "Elettra Lamborghini": attaccato, Alexa lo legge male."""
+    nome = re.sub(r"(?<=[a-zàèéìòùáíóúñ])(?=[A-Z])", " ", (nome or "").strip())
+    return nome or None
 
 
 def distanza_m(lat1, lon1, lat2, lon2):
@@ -230,133 +165,67 @@ def distanza_m(lat1, lon1, lat2, lon2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def luogo_noto(s, luoghi):
+def _nome_luogo(nome, lingua):
+    """Il nome di un luogo di config.json: una stringa, o una per lingua
+    ({"it": "a casa", "en": "at home", "es": "en casa"})."""
+    if isinstance(nome, dict):
+        return nome.get(lingua) or nome.get("it") or next(iter(nome.values()), None)
+    return nome
+
+
+def luogo_noto(s, luoghi, lingua="it"):
     """Il primo luogo di config.json entro il suo raggio, o None."""
     if s.lat is None or s.lon is None:
         return None
     for l in luoghi or []:
         try:
             if distanza_m(s.lat, s.lon, float(l["lat"]), float(l["lon"])) <= float(l.get("raggio_m", 150)):
-                return l["nome"]
+                return _nome_luogo(l["nome"], lingua)
         except (KeyError, TypeError, ValueError):
             continue
     return None
 
 
-def frase_indirizzo(indirizzo):
-    """Dal JSON di Nominatim a "in Via Roma 12, a Bologna"."""
-    if not indirizzo:
-        return None
-    via = indirizzo.get("road") or indirizzo.get("pedestrian") or indirizzo.get("square")
-    civico = indirizzo.get("house_number")
-    paese = (indirizzo.get("city") or indirizzo.get("town") or indirizzo.get("village")
-             or indirizzo.get("municipality") or indirizzo.get("hamlet"))
-    parti = []
-    if via:
-        parti.append("in %s %s" % (via, civico) if civico else "in %s" % via)
-    if paese:
-        parti.append("a %s" % paese)
-    return ", ".join(parti) or None
-
-
-def nome_parlato(nome):
-    """"ElettraLamborghini" -> "Elettra Lamborghini": attaccato, Alexa lo legge male."""
-    nome = re.sub(r"(?<=[a-zàèéìòù])(?=[A-Z])", " ", (nome or "").strip())
-    return nome or None
-
-
-def frase_posizione(s, luoghi, indirizzo, nome=None):
-    """`nome` (se c'e') prende il posto di "L'auto": qui nessun aggettivo da concordare."""
-    chi = cap(soggetto(nome))
-    if s.lat is None or s.lon is None:
-        return "%s non comunica la posizione in questo momento." % chi
-    movimento = " ed è in movimento" if s.in_movimento else ""
-    luogo = luogo_noto(s, luoghi)
-    if luogo:
-        return "%s è %s%s." % (chi, luogo, movimento)
-    dove = frase_indirizzo(indirizzo)
-    if dove:
-        return "%s si trova %s%s." % (chi, dove, movimento)
-    frase = ("Non riesco a ricavare l'indirizzo %s, ma trovi la posizione nella scheda dell'app Alexa."
-             % ("di " + nome if nome else "dell'auto"))
-    if s.in_movimento:
-        frase += " %s è in movimento." % chi
-    return frase
-
-
-def _cose_che_ha(s):
-    """Le anomalie da dire come "l'auto ha …"."""
-    voci = []
-    if s.portiere_aperte:
-        voci.append("una portiera aperta")
-    if s.finestrini_aperti:
-        voci.append("un finestrino aperto")
-    if s.baule_aperto:
-        voci.append("il baule aperto")
-    if s.gomme_anomale:
-        ruote = s.gomme_anomale
-        if len(ruote) == 1:
-            voci.append("una pressione anomala sulla gomma %s" % ruote[0])
-        else:
-            voci.append("una pressione anomala sulle gomme %s" % _elenco(ruote))
-    return voci
-
-
-def _non_chiusa(s):
-    # Aperta mentre si guida e' normale: conta solo a veicolo fermo.
-    return s.chiusa is False and not s.in_movimento
-
-
 def anomalie(s):
-    return _cose_che_ha(s) + (["non chiusa a chiave"] if _non_chiusa(s) else [])
+    """Elenco neutro delle anomalie (vuoto = tutto a posto)."""
+    return comune.cose_aperte(s) + (["non_chiusa"] if comune.non_chiusa(s) else [])
 
 
-def _elenco(voci):
-    return voci[0] if len(voci) == 1 else ", ".join(voci[:-1]) + " e " + voci[-1]
+# ---- Frasi, nella lingua richiesta ---------------------------------------------------
+
+def frase_batteria(s, nome=None, lingua="it"):
+    return lingue.get(lingua).batteria(s, nome)
 
 
-def frase_clima(s):
-    """Solo se il clima e' acceso: non e' un'anomalia, ma e' bene saperlo."""
-    if not s.clima_acceso:
-        return ""
-    if s.temp_clima:
-        return "Il clima è acceso a %d gradi." % s.temp_clima
-    return "Il clima è acceso."
+def frase_posizione(s, luoghi, indirizzo, nome=None, lingua="it"):
+    L = lingue.get(lingua)
+    dove = L.indirizzo(indirizzo) if indirizzo else None
+    return L.posizione(s, luogo_noto(s, luoghi, L.CODICE), dove, nome)
 
 
-def frase_anomalie(s, nome=None, sottinteso=False):
-    """
-    sottinteso=True: il soggetto non si ripete ("Tutto a posto: è chiusa a
-    chiave…"), per il riepilogo, dove l'auto e' gia' stata nominata.
-    """
-    chi = "" if sottinteso else soggetto(nome) + " "
-    clima = frase_clima(s)
-    testo = _frase_anomalie(s, chi)
-    return testo + (" " + clima if clima else "")
+def frase_anomalie(s, nome=None, sottinteso=False, lingua="it"):
+    return lingue.get(lingua).anomalie(s, nome, sottinteso)
 
 
-def _frase_anomalie(s, chi):
-    voci = _cose_che_ha(s)
-    if voci:
-        frase = "Attenzione: %sha %s" % (chi, _elenco(voci))
-        if _non_chiusa(s):
-            frase += ", e non è chiusa a chiave"
-        return frase + "."
-    if _non_chiusa(s):
-        return "Attenzione: %snon è chiusa a chiave." % chi
-    if s.in_movimento:
-        return "Nessuna anomalia: %sè in movimento, con portiere e finestrini chiusi." % chi
-    if s.chiusa:
-        return "Tutto a posto: %sè chiusa a chiave, con finestrini e baule chiusi." % chi
-    return "Tutto a posto: portiere, finestrini e baule sono chiusi."
-
-
-def frase_riepilogo(s, luoghi, indirizzo, nome=None):
+def frase_riepilogo(s, luoghi, indirizzo, nome=None, lingua="it"):
     # Il nome solo nella prima frase: ripeterlo tre volte suonerebbe strano.
-    return " ".join([frase_posizione(s, luoghi, indirizzo, nome), frase_batteria(s),
-                     frase_anomalie(s, nome, sottinteso=True)])
+    return " ".join([frase_posizione(s, luoghi, indirizzo, nome, lingua),
+                     frase_batteria(s, None, lingua),
+                     frase_anomalie(s, nome, sottinteso=True, lingua=lingua)])
 
 
-def con_eta(frase, s, adesso_ms=None):
-    nota = nota_eta_dato(s, adesso_ms)
+def nota_eta_dato(s, adesso_ms=None, lingua="it", fuso_ore=1):
+    """Frase sull'ultimo contatto con l'auto, solo se il dato e' vecchio."""
+    if not s.rilevato_ms:
+        return ""
+    adesso_ms = adesso_ms or int(time.time() * 1000)
+    if adesso_ms - s.rilevato_ms < DATO_VECCHIO_ORE * 3600 * 1000:
+        return ""
+    quando = ora_locale(s.rilevato_ms, fuso_ore)
+    oggi = ora_locale(adesso_ms, fuso_ore).date()
+    return lingue.get(lingua).eta(quando, oggi, oggi - timedelta(days=1))
+
+
+def con_eta(frase, s, adesso_ms=None, lingua="it", fuso_ore=1):
+    nota = nota_eta_dato(s, adesso_ms, lingua, fuso_ore)
     return frase + (" " + nota if nota else "")

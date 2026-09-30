@@ -1,0 +1,318 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "my leapcar",
+      "intents": [
+        {
+          "name": "BatteriaIntent",
+          "slots": [],
+          "samples": [
+            "cuánta batería tiene",
+            "cuánta batería tiene el coche",
+            "cuánta batería le queda",
+            "cuánta carga tiene",
+            "qué nivel de batería tiene",
+            "nivel de batería",
+            "estado de la batería",
+            "qué autonomía tiene",
+            "cuánta autonomía tiene",
+            "cuánta autonomía le queda",
+            "cuántos kilómetros le quedan",
+            "cuántos kilómetros puedo hacer",
+            "está cargando",
+            "se está cargando",
+            "cuándo termina la carga",
+            "cuánto falta para que termine de cargar",
+            "está cargado",
+            "está cargado el coche",
+            "si está cargando",
+            "si está cargado"
+          ]
+        },
+        {
+          "name": "PosizioneIntent",
+          "slots": [],
+          "samples": [
+            "dónde está el coche",
+            "dónde está",
+            "dónde está mi coche",
+            "dónde he aparcado",
+            "dónde aparqué el coche",
+            "dónde he aparcado el coche",
+            "dónde he dejado el coche",
+            "dónde dejé el coche",
+            "la ubicación del coche",
+            "cuál es la ubicación del coche",
+            "dónde está aparcado"
+          ]
+        },
+        {
+          "name": "AnomalieIntent",
+          "slots": [],
+          "samples": [
+            "está todo bien",
+            "está todo en orden",
+            "todo en orden",
+            "hay algún problema",
+            "hay problemas",
+            "hay avisos",
+            "está cerrado",
+            "está cerrado con llave",
+            "he cerrado el coche",
+            "cerré el coche",
+            "hay ventanillas abiertas",
+            "he dejado una ventanilla abierta",
+            "están cerradas las ventanillas",
+            "están cerradas las puertas",
+            "está cerrado el maletero",
+            "revisa el coche",
+            "cómo están los neumáticos",
+            "si está todo bien",
+            "si está todo en orden",
+            "si está cerrado",
+            "si está cerrado con llave",
+            "si hay algún problema"
+          ]
+        },
+        {
+          "name": "RiepilogoIntent",
+          "slots": [],
+          "samples": [
+            "cómo está el coche",
+            "cómo está",
+            "cómo está mi coche",
+            "dame el estado",
+            "estado del coche",
+            "estado completo",
+            "hazme un resumen",
+            "un resumen",
+            "dímelo todo",
+            "novedades"
+          ]
+        },
+        {
+          "name": "ChiudiAutoIntent",
+          "slots": [],
+          "samples": [
+            "cierra el coche",
+            "cierra el coche con llave",
+            "ciérralo",
+            "ciérralo con llave",
+            "bloquea el coche",
+            "bloquea las puertas",
+            "cierra las puertas",
+            "cerrar el coche",
+            "cerrar el coche con llave",
+            "bloquear las puertas",
+            "cierre el coche",
+            "que cierre el coche",
+            "cierre el coche con llave",
+            "que cierre el coche con llave",
+            "bloquee las puertas",
+            "que bloquee las puertas",
+            "cierre las puertas",
+            "que cierre las puertas"
+          ]
+        },
+        {
+          "name": "ChiudiFinestriniIntent",
+          "slots": [],
+          "samples": [
+            "cierra las ventanillas",
+            "cierra todas las ventanillas",
+            "cierra la ventanilla",
+            "sube las ventanillas",
+            "cerrar las ventanillas",
+            "subir las ventanillas",
+            "cierre las ventanillas",
+            "que cierre las ventanillas",
+            "suba las ventanillas",
+            "que suba las ventanillas"
+          ]
+        },
+        {
+          "name": "ClimaIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "enciende el climatizador",
+            "enciende el climatizador a {temperatura} grados",
+            "enciende el climatizador a {temperatura}",
+            "enciende el clima",
+            "enciende el clima a {temperatura} grados",
+            "enciende el clima a {temperatura}",
+            "pon el climatizador",
+            "pon el climatizador a {temperatura} grados",
+            "pon el climatizador a {temperatura}",
+            "activa el climatizador",
+            "activa el climatizador a {temperatura} grados",
+            "activa el climatizador a {temperatura}",
+            "pon la temperatura",
+            "pon la temperatura a {temperatura} grados",
+            "pon la temperatura a {temperatura}",
+            "prepara el coche",
+            "prepara el coche a {temperatura} grados",
+            "prepara el coche a {temperatura}",
+            "encender el climatizador",
+            "encender el climatizador a {temperatura} grados",
+            "encender el climatizador a {temperatura}",
+            "encienda el climatizador",
+            "encienda el climatizador a {temperatura} grados",
+            "encienda el climatizador a {temperatura}",
+            "que encienda el climatizador",
+            "que encienda el climatizador a {temperatura} grados",
+            "que encienda el climatizador a {temperatura}",
+            "ponga el climatizador",
+            "ponga el climatizador a {temperatura} grados",
+            "ponga el climatizador a {temperatura}",
+            "que ponga el climatizador",
+            "que ponga el climatizador a {temperatura} grados",
+            "que ponga el climatizador a {temperatura}"
+          ]
+        },
+        {
+          "name": "RiscaldamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "enciende la calefacción",
+            "enciende la calefacción a {temperatura} grados",
+            "enciende la calefacción a {temperatura}",
+            "pon la calefacción",
+            "pon la calefacción a {temperatura} grados",
+            "pon la calefacción a {temperatura}",
+            "calienta el coche",
+            "calienta el coche a {temperatura} grados",
+            "calienta el coche a {temperatura}",
+            "enciende el calor",
+            "enciende el calor a {temperatura} grados",
+            "enciende el calor a {temperatura}",
+            "encender la calefacción",
+            "encender la calefacción a {temperatura} grados",
+            "encender la calefacción a {temperatura}",
+            "calentar el coche",
+            "calentar el coche a {temperatura} grados",
+            "calentar el coche a {temperatura}",
+            "encienda la calefacción",
+            "encienda la calefacción a {temperatura} grados",
+            "encienda la calefacción a {temperatura}",
+            "que encienda la calefacción",
+            "que encienda la calefacción a {temperatura} grados",
+            "que encienda la calefacción a {temperatura}",
+            "ponga la calefacción",
+            "ponga la calefacción a {temperatura} grados",
+            "ponga la calefacción a {temperatura}",
+            "que ponga la calefacción",
+            "que ponga la calefacción a {temperatura} grados",
+            "que ponga la calefacción a {temperatura}",
+            "caliente el coche",
+            "caliente el coche a {temperatura} grados",
+            "caliente el coche a {temperatura}",
+            "que caliente el coche",
+            "que caliente el coche a {temperatura} grados",
+            "que caliente el coche a {temperatura}"
+          ]
+        },
+        {
+          "name": "RaffreddamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "enciende el aire acondicionado",
+            "enciende el aire acondicionado a {temperatura} grados",
+            "enciende el aire acondicionado a {temperatura}",
+            "pon el aire acondicionado",
+            "pon el aire acondicionado a {temperatura} grados",
+            "pon el aire acondicionado a {temperatura}",
+            "enciende el aire",
+            "enciende el aire a {temperatura} grados",
+            "enciende el aire a {temperatura}",
+            "enfría el coche",
+            "enfría el coche a {temperatura} grados",
+            "enfría el coche a {temperatura}",
+            "refresca el coche",
+            "refresca el coche a {temperatura} grados",
+            "refresca el coche a {temperatura}",
+            "encender el aire acondicionado",
+            "encender el aire acondicionado a {temperatura} grados",
+            "encender el aire acondicionado a {temperatura}",
+            "enfriar el coche",
+            "enfriar el coche a {temperatura} grados",
+            "enfriar el coche a {temperatura}",
+            "encienda el aire acondicionado",
+            "encienda el aire acondicionado a {temperatura} grados",
+            "encienda el aire acondicionado a {temperatura}",
+            "que encienda el aire acondicionado",
+            "que encienda el aire acondicionado a {temperatura} grados",
+            "que encienda el aire acondicionado a {temperatura}",
+            "ponga el aire acondicionado",
+            "ponga el aire acondicionado a {temperatura} grados",
+            "ponga el aire acondicionado a {temperatura}",
+            "que ponga el aire acondicionado",
+            "que ponga el aire acondicionado a {temperatura} grados",
+            "que ponga el aire acondicionado a {temperatura}",
+            "enfríe el coche",
+            "enfríe el coche a {temperatura} grados",
+            "enfríe el coche a {temperatura}",
+            "que enfríe el coche",
+            "que enfríe el coche a {temperatura} grados",
+            "que enfríe el coche a {temperatura}"
+          ]
+        },
+        {
+          "name": "SpegniClimaIntent",
+          "slots": [],
+          "samples": [
+            "apaga el climatizador",
+            "apaga el clima",
+            "apaga el aire acondicionado",
+            "apaga el aire",
+            "apaga la calefacción",
+            "apagar el climatizador",
+            "apagar la calefacción",
+            "apagar el aire acondicionado",
+            "apague el climatizador",
+            "que apague el climatizador",
+            "apague la calefacción",
+            "que apague la calefacción",
+            "apague el aire acondicionado",
+            "que apague el aire acondicionado"
+          ]
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}

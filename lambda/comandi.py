@@ -6,6 +6,8 @@ si prova offline. Volutamente NON ci sono l'apertura dell'auto ne' quella
 dei finestrini: una skill vocale la puo' usare chiunque sia nella stanza.
 """
 
+import lingue
+
 CMD_LOCK = "110"
 CMD_CLIMATE = "170"
 CMD_WINDOWS = "230"
@@ -14,22 +16,6 @@ TEMP_MIN = 18
 TEMP_MAX = 32
 TEMP_PREDEFINITA = 22
 VENTOLA_PREDEFINITA = 3
-
-CONFERMA_STATO = " Tra un minuto chiedimi se è tutto a posto per la conferma."
-
-
-def _chi(nome):
-    return nome or "l'auto"
-
-
-def _a_chi(nome):
-    if not nome:
-        return "all'auto"
-    return ("ad " if nome[:1].lower() == "a" else "a ") + nome
-
-
-def _cap(testo):
-    return testo[:1].upper() + testo[1:]
 
 
 class Piano:
@@ -65,58 +51,58 @@ def payload_spegni(is_t03):
     return '{"operate":"off"}'
 
 
-def _temperatura(valore, s):
+def _temperatura(valore, L):
     """(gradi, errore): errore e' la frase da dire se il numero non va bene."""
     if valore in (None, "", "?"):
         return TEMP_PREDEFINITA, None
     try:
         gradi = int(round(float(str(valore).replace(",", "."))))
     except ValueError:
-        return None, "Non ho capito la temperatura."
+        return None, L.TEMP_NON_CAPITA
     if gradi < TEMP_MIN or gradi > TEMP_MAX:
-        return None, "Posso impostare il clima tra %d e %d gradi." % (TEMP_MIN, TEMP_MAX)
+        return None, L.temp_fuori(TEMP_MIN, TEMP_MAX)
     return gradi, None
 
 
-def pianifica(azione, s, is_t03, temperatura=None, ventola=VENTOLA_PREDEFINITA, nome=None):
+def pianifica(azione, s, is_t03, temperatura=None, ventola=VENTOLA_PREDEFINITA, nome=None, lingua="it"):
     """
     azione: 'chiudi', 'finestrini', 'clima', 'caldo', 'freddo', 'spegni'.
     nome: come chiamare l'auto nelle risposte ("Elettra Lamborghini"); None = "l'auto".
+    lingua: "it", "en", "es" (o il locale di Alexa, "en-GB"…).
     """
-    chi, a_chi = _chi(nome), _a_chi(nome)
+    L = lingue.get(lingua)
     if azione == "chiudi":
         if s.in_movimento:
-            return Piano("%s è in movimento: non la chiudo a distanza." % _cap(chi))
+            return Piano(L.in_movimento(nome))
         if s.chiusa:
-            return Piano("%s è già chiusa a chiave." % _cap(chi))
-        avviso = "Attenzione, risulta una portiera aperta: la chiusura potrebbe non riuscire. " \
-            if s.portiere_aperte else ""
+            return Piano(L.gia_chiusa(nome))
+        avviso = L.AVVISO_PORTIERA if s.portiere_aperte else ""
         return Piano(
             cmd_id=CMD_LOCK, contenuto='{"value":"lock"}',
-            fatto=avviso + "Fatto: %s è chiusa a chiave." % chi,
-            inviato=avviso + "Ho mandato %s il comando di chiusura." % a_chi + CONFERMA_STATO,
+            fatto=avviso + L.chiusa_fatto(nome),
+            inviato=avviso + L.chiusa_inviato(nome),
         )
 
     if azione == "finestrini":
         if not s.finestrini_aperti:
-            return Piano("I finestrini sono già chiusi.")
+            return Piano(L.FINESTRINI_GIA)
         return Piano(
             cmd_id=CMD_WINDOWS, contenuto='{"value":"0"}',
-            fatto="Fatto: finestrini chiusi.",
-            inviato="Ho mandato %s la chiusura dei finestrini." % a_chi + CONFERMA_STATO,
+            fatto=L.FINESTRINI_FATTO,
+            inviato=L.finestrini_inviato(nome),
         )
 
     if azione == "spegni":
         if s.clima_acceso is False:
-            return Piano("Il clima è già spento.")
+            return Piano(L.SPENTO_GIA)
         return Piano(
             cmd_id=CMD_CLIMATE, contenuto=payload_spegni(is_t03),
-            fatto="Fatto: clima spento.",
-            inviato="Ho mandato %s lo spegnimento del clima." % a_chi + CONFERMA_STATO,
+            fatto=L.SPENTO_FATTO,
+            inviato=L.spento_inviato(nome),
         )
 
     if azione in ("clima", "caldo", "freddo"):
-        gradi, errore = _temperatura(temperatura, s)
+        gradi, errore = _temperatura(temperatura, L)
         if errore:
             return Piano(errore)
         ventola = max(1, min(7, int(ventola or VENTOLA_PREDEFINITA)))
@@ -132,12 +118,11 @@ def pianifica(azione, s, is_t03, temperatura=None, ventola=VENTOLA_PREDEFINITA, 
             impianto = "clima"
         else:
             contenuto = payload_clima("out", "hot" if caldo else "cold", "manual", gradi, ventola)
-            impianto = "riscaldamento" if caldo else "aria condizionata"
-        acceso = "accesa" if impianto == "aria condizionata" else "acceso"
+            impianto = "caldo" if caldo else "freddo"
         return Piano(
             cmd_id=CMD_CLIMATE, contenuto=contenuto,
-            fatto="Fatto: %s %s a %d gradi." % (impianto, acceso, gradi),
-            inviato="Ho mandato %s: %s a %d gradi." % (a_chi, impianto, gradi) + CONFERMA_STATO,
+            fatto=L.acceso_fatto(impianto, gradi),
+            inviato=L.acceso_inviato(nome, impianto, gradi),
         )
 
     raise ValueError("azione sconosciuta: %s" % azione)

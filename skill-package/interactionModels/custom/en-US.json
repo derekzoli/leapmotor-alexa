@@ -1,0 +1,313 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "my leapcar",
+      "intents": [
+        {
+          "name": "BatteriaIntent",
+          "slots": [],
+          "samples": [
+            "how much charge",
+            "how much charge does it have",
+            "how much charge does the car have",
+            "how much battery",
+            "how much battery does it have",
+            "how much battery is left",
+            "how charged is the car",
+            "how charged is it",
+            "what's the battery level",
+            "battery level",
+            "battery status",
+            "what's the charge level",
+            "what's the range",
+            "how much range",
+            "how much range does it have",
+            "how many kilometres can i drive",
+            "how many kilometers can i drive",
+            "how many kilometres are left",
+            "how many kilometers are left",
+            "is it charging",
+            "is the car charging",
+            "when will charging finish",
+            "when will it be charged",
+            "how long until it's charged",
+            "is it charged",
+            "how much charge it has",
+            "how much battery it has",
+            "how much range it has",
+            "if it's charging",
+            "whether it's charging"
+          ]
+        },
+        {
+          "name": "PosizioneIntent",
+          "slots": [],
+          "samples": [
+            "where is the car",
+            "where is it",
+            "where's the car",
+            "where's my car",
+            "where is my car",
+            "where did i park",
+            "where did i park the car",
+            "where did i leave the car",
+            "where did i leave it",
+            "the car's location",
+            "what's the car's location",
+            "where is it parked",
+            "where is the car parked",
+            "where the car is",
+            "where it is",
+            "where it's parked"
+          ]
+        },
+        {
+          "name": "AnomalieIntent",
+          "slots": [],
+          "samples": [
+            "is everything ok",
+            "is everything okay",
+            "is everything fine",
+            "is everything all right",
+            "any problems",
+            "are there any problems",
+            "any warnings",
+            "are there any warnings",
+            "is it locked",
+            "is the car locked",
+            "did i lock the car",
+            "did i lock it",
+            "are the windows closed",
+            "is a window open",
+            "did i leave a window open",
+            "are the doors closed",
+            "is the boot closed",
+            "is the trunk closed",
+            "check the car",
+            "how are the tyres",
+            "how are the tires",
+            "if everything is ok",
+            "whether everything is ok",
+            "if everything is okay",
+            "if the car is locked",
+            "whether the car is locked",
+            "if it's locked",
+            "if there are any problems"
+          ]
+        },
+        {
+          "name": "RiepilogoIntent",
+          "slots": [],
+          "samples": [
+            "how is the car",
+            "how's the car",
+            "how is my car",
+            "car status",
+            "status",
+            "give me the status",
+            "give me a summary",
+            "a summary",
+            "tell me everything",
+            "give me an update",
+            "what's new",
+            "how the car is",
+            "how the car is doing"
+          ]
+        },
+        {
+          "name": "ChiudiAutoIntent",
+          "slots": [],
+          "samples": [
+            "lock the car",
+            "lock it",
+            "lock my car",
+            "lock the doors",
+            "lock up the car",
+            "lock up",
+            "close the car",
+            "close and lock the car"
+          ]
+        },
+        {
+          "name": "ChiudiFinestriniIntent",
+          "slots": [],
+          "samples": [
+            "close the windows",
+            "close all the windows",
+            "close the window",
+            "roll up the windows",
+            "wind up the windows",
+            "shut the windows",
+            "put the windows up"
+          ]
+        },
+        {
+          "name": "ClimaIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "turn on the climate control",
+            "turn on the climate control to {temperatura} degrees",
+            "turn on the climate control at {temperatura} degrees",
+            "turn on the climate control to {temperatura}",
+            "turn on the climate",
+            "turn on the climate to {temperatura} degrees",
+            "turn on the climate at {temperatura} degrees",
+            "turn on the climate to {temperatura}",
+            "switch on the climate control",
+            "switch on the climate control to {temperatura} degrees",
+            "switch on the climate control at {temperatura} degrees",
+            "switch on the climate control to {temperatura}",
+            "start the climate control",
+            "start the climate control to {temperatura} degrees",
+            "start the climate control at {temperatura} degrees",
+            "start the climate control to {temperatura}",
+            "set the climate control",
+            "set the climate control to {temperatura} degrees",
+            "set the climate control at {temperatura} degrees",
+            "set the climate control to {temperatura}",
+            "set the temperature",
+            "set the temperature to {temperatura} degrees",
+            "set the temperature at {temperatura} degrees",
+            "set the temperature to {temperatura}",
+            "precondition the car",
+            "precondition the car to {temperatura} degrees",
+            "precondition the car at {temperatura} degrees",
+            "precondition the car to {temperatura}",
+            "prepare the car",
+            "prepare the car to {temperatura} degrees",
+            "prepare the car at {temperatura} degrees",
+            "prepare the car to {temperatura}"
+          ]
+        },
+        {
+          "name": "RiscaldamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "turn on the heating",
+            "turn on the heating to {temperatura} degrees",
+            "turn on the heating at {temperatura} degrees",
+            "turn on the heating to {temperatura}",
+            "switch on the heating",
+            "switch on the heating to {temperatura} degrees",
+            "switch on the heating at {temperatura} degrees",
+            "switch on the heating to {temperatura}",
+            "turn on the heat",
+            "turn on the heat to {temperatura} degrees",
+            "turn on the heat at {temperatura} degrees",
+            "turn on the heat to {temperatura}",
+            "put the heating on",
+            "put the heating on to {temperatura} degrees",
+            "put the heating on at {temperatura} degrees",
+            "put the heating on to {temperatura}",
+            "heat the car",
+            "heat the car to {temperatura} degrees",
+            "heat the car at {temperatura} degrees",
+            "heat the car to {temperatura}",
+            "heat up the car",
+            "heat up the car to {temperatura} degrees",
+            "heat up the car at {temperatura} degrees",
+            "heat up the car to {temperatura}",
+            "warm up the car",
+            "warm up the car to {temperatura} degrees",
+            "warm up the car at {temperatura} degrees",
+            "warm up the car to {temperatura}",
+            "warm the car",
+            "warm the car to {temperatura} degrees",
+            "warm the car at {temperatura} degrees",
+            "warm the car to {temperatura}"
+          ]
+        },
+        {
+          "name": "RaffreddamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "turn on the air conditioning",
+            "turn on the air conditioning to {temperatura} degrees",
+            "turn on the air conditioning at {temperatura} degrees",
+            "turn on the air conditioning to {temperatura}",
+            "switch on the air conditioning",
+            "switch on the air conditioning to {temperatura} degrees",
+            "switch on the air conditioning at {temperatura} degrees",
+            "switch on the air conditioning to {temperatura}",
+            "turn on the a. c.",
+            "turn on the a. c. to {temperatura} degrees",
+            "turn on the a. c. at {temperatura} degrees",
+            "turn on the a. c. to {temperatura}",
+            "put the air conditioning on",
+            "put the air conditioning on to {temperatura} degrees",
+            "put the air conditioning on at {temperatura} degrees",
+            "put the air conditioning on to {temperatura}",
+            "cool the car",
+            "cool the car to {temperatura} degrees",
+            "cool the car at {temperatura} degrees",
+            "cool the car to {temperatura}",
+            "cool down the car",
+            "cool down the car to {temperatura} degrees",
+            "cool down the car at {temperatura} degrees",
+            "cool down the car to {temperatura}",
+            "cool the car down",
+            "cool the car down to {temperatura} degrees",
+            "cool the car down at {temperatura} degrees",
+            "cool the car down to {temperatura}",
+            "turn on the cooling",
+            "turn on the cooling to {temperatura} degrees",
+            "turn on the cooling at {temperatura} degrees",
+            "turn on the cooling to {temperatura}"
+          ]
+        },
+        {
+          "name": "SpegniClimaIntent",
+          "slots": [],
+          "samples": [
+            "turn off the climate control",
+            "turn off the climate",
+            "switch off the climate control",
+            "stop the climate control",
+            "turn off the heating",
+            "switch off the heating",
+            "turn off the air conditioning",
+            "switch off the air conditioning",
+            "turn off the a. c.",
+            "turn off the heat"
+          ]
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}

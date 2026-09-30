@@ -69,15 +69,19 @@ with open(os.path.join(HERE, "ultimo_stato.json"), "w", encoding="utf-8") as f:
 
 s = risposte.Stato(data)
 luoghi = cfg.get("luoghi") or []
-indirizzo = None
-if s.lat is not None and not risposte.luogo_noto(s, luoghi):
-    indirizzo = posizione.indirizzo(s.lat, s.lon)
-
 nome = risposte.nome_parlato(cfg.get("nome") or v.nickname)
-print("\n--- Cosa direbbe Alexa ---")
-print("Carica:    ", risposte.con_eta(risposte.frase_batteria(s, nome), s))
-print("Posizione: ", risposte.con_eta(risposte.frase_posizione(s, luoghi, indirizzo, nome), s))
-print("Anomalie:  ", risposte.con_eta(risposte.frase_anomalie(s, nome), s))
+fuso = int(cfg.get("fuso_orario", 1))
+
+for lingua, titolo in (("it", "italiano"), ("en", "inglese"), ("es", "spagnolo")):
+    indirizzo = None
+    if s.lat is not None and not risposte.luogo_noto(s, luoghi, lingua):
+        indirizzo = posizione.indirizzo(s.lat, s.lon, lingua)
+    print("\n--- Cosa direbbe Alexa in %s ---" % titolo)
+    print("Carica:    ", risposte.con_eta(risposte.frase_batteria(s, nome, lingua), s, lingua=lingua, fuso_ore=fuso))
+    print("Posizione: ", risposte.con_eta(risposte.frase_posizione(s, luoghi, indirizzo, nome, lingua), s,
+                                          lingua=lingua, fuso_ore=fuso))
+    print("Anomalie:  ", risposte.con_eta(risposte.frase_anomalie(s, nome, lingua=lingua), s,
+                                          lingua=lingua, fuso_ore=fuso))
 if s.lat is not None:
     print("\nMappa:", posizione.link_mappa(s.lat, s.lon))
     print("Coordinate per config.json (luoghi): \"lat\": %.6f, \"lon\": %.6f" % (s.lat, s.lon))

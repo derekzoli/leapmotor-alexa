@@ -1,5 +1,29 @@
 # Note degli aggiornamenti
 
+## 1.2 — 30 settembre 2026
+
+### Novità
+
+- **Tre lingue: italiano, inglese e spagnolo.** È la stessa skill con più lingue nella console Alexa: il codice è uno solo e risponde nella lingua dell'Echo che la interroga. Domande, comandi e regole di sicurezza sono identici in tutte e tre.
+  - **Inglese** (modelli `en-GB.json` e `en-US.json`): chilometri e gradi Celsius. *"Alexa, ask my leapcar how much charge it has"*, *"…to lock the car"*, *"…to turn on the heating to 21 degrees"*.
+  - **Spagnolo** (modello `es-ES.json`): *"Alexa, pregunta a my leapcar dónde está el coche"*, *"Alexa, pide a my leapcar que cierre el coche"*.
+  - Anche gli indirizzi arrivano nella lingua giusta ("Bologna" / "Bolonia").
+- **Nuovo nome della skill: "my leapcar"**, uguale in tutte le lingue.
+- **Luoghi con un nome per lingua**: `"nome": { "it": "a casa", "en": "at home", "es": "en casa" }`. Un nome semplice continua a valere per tutte le lingue.
+- **Nuovo campo `fuso_orario`** in `config.json` (1 = Italia e Spagna, 0 = Regno Unito) per dire l'ora giusta dell'ultimo contatto con l'auto.
+- `prova_locale.py` stampa le risposte in tutte e tre le lingue.
+
+### Sotto il cofano
+
+- Le frasi sono in `lingua_it.py`, `lingua_en.py`, `lingua_es.py`, con le stesse funzioni. Stato, sicurezza dei comandi e messaggi mandati all'auto sono in comune: non cambiano con la lingua.
+- Le frasi italiane sono rimaste identiche alla 1.1 (verificato dai test).
+
+### Come aggiornare dalla 1.1
+
+1. **Code**: copiati da parte il tuo `config.json`, **Import Code** con il nuovo zip, poi rimetti i tuoi dati (e, se vuoi, `fuso_orario` e i nomi dei luoghi per lingua). **Save** → **Deploy**.
+2. **Build**, per l'italiano: ricarica `it-IT.json` (cambia solo il nome della skill) → **Save** → **Build skill**.
+3. Per le lingue nuove: *Language settings* → aggiungi *English (UK)*, *English (US)*, *Spanish (ES)*; per ognuna carica il suo `.json` e fai **Build skill** (vedi il README).
+
 ## 1.1 — 30 settembre 2026
 
 ### Novità

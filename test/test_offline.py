@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "lambda"))
 
 import comandi  # noqa: E402
 import leapcloud  # noqa: E402
+import lingue  # noqa: E402
 import risposte  # noqa: E402
 
 with open(os.path.join(HERE, "stato_t03.json"), encoding="utf-8") as f:
@@ -223,6 +224,111 @@ def test_temperatura_predefinita_e_limiti():
 def test_stato_dice_clima_acceso():
     assert risposte.frase_anomalie(stato(acSwitch=True, acSetting=21)).endswith("Il clima è acceso a 21 gradi.")
     assert "clima" not in risposte.frase_anomalie(stato())
+
+
+# ---- Lingue -------------------------------------------------------------------------
+
+N = "Elettra Lamborghini"
+BOLOGNA = {"road": "Piazza Maggiore", "house_number": "1", "city": "Bologna", "country_code": "it"}
+
+
+def test_scelta_lingua():
+    assert lingue.get("it-IT").CODICE == "it"
+    assert lingue.get("en-GB").CODICE == "en" and lingue.get("en-US").CODICE == "en"
+    assert lingue.get("es-ES").CODICE == "es" and lingue.get("es-MX").CODICE == "es"
+    assert lingue.get("fr-FR").CODICE == "it" and lingue.get(None).CODICE == "it"
+
+
+def test_ogni_lingua_ha_tutte_le_frasi():
+    richieste = [n for n in dir(lingue.get("it")) if not n.startswith("_") and n.isupper() or n in (
+        "batteria", "indirizzo", "posizione", "clima", "anomalie", "eta", "in_movimento", "gia_chiusa",
+        "chiusa_fatto", "chiusa_inviato", "finestrini_inviato", "spento_inviato", "acceso_fatto",
+        "acceso_inviato", "temp_fuori")]
+    for codice in ("en", "es"):
+        L = lingue.get(codice)
+        mancanti = [n for n in richieste if not hasattr(L, n)]
+        assert not mancanti, (codice, mancanti)
+        assert set(L.ERRORI) == set(lingue.get("it").ERRORI), codice
+
+
+def test_inglese_stato():
+    assert risposte.frase_batteria(stato(), None, "en") == \
+        "The battery is at 81 percent, with about 218 kilometres of range."
+    assert risposte.frase_batteria(stato(), N, "en") == \
+        "Elettra Lamborghini is 81 percent charged, with about 218 kilometres of range."
+    assert risposte.frase_batteria(stato(chargeState=2, batteryCurrent=-15, chargeRemainTime=70), None, "en") \
+        .endswith("It's charging and will be done in about an hour and 10 minutes, at 80 percent.")
+    assert risposte.frase_posizione(stato(), [], BOLOGNA, N, "en") == \
+        "Elettra Lamborghini is at Piazza Maggiore 1, Bologna."
+    londra = {"road": "Baker Street", "house_number": "221B", "city": "London", "country_code": "gb"}
+    assert risposte.frase_posizione(stato(), [], londra, None, "en") == "The car is at 221B Baker Street, London."
+    assert risposte.frase_anomalie(stato(), N, lingua="en") == \
+        "All good: Elettra Lamborghini is locked, with windows and boot closed."
+    assert risposte.frase_anomalie(stato(driverDoorLockStatus=False, rightRearWindowPercent=20), None,
+                                   lingua="en") == "Warning: the car has a window open, and it isn't locked."
+    assert risposte.frase_anomalie(stato(acSwitch=True, acSetting=21), lingua="en") \
+        .endswith("The climate control is on at 21 degrees.")
+    riepilogo = risposte.frase_riepilogo(stato(), [], BOLOGNA, N, "en")
+    assert riepilogo.count(N) == 1 and "All good: it is locked" in riepilogo
+
+
+def test_inglese_eta_e_comandi():
+    s = stato()
+    assert risposte.nota_eta_dato(s, s.rilevato_ms + 24 * 3600 * 1000, "en") == \
+        "I last heard from the car yesterday at 11:54."
+    # Regno Unito: un'ora indietro rispetto all'Italia.
+    assert risposte.nota_eta_dato(s, s.rilevato_ms + 24 * 3600 * 1000, "en", fuso_ore=0) == \
+        "I last heard from the car yesterday at 10:54."
+    assert comandi.pianifica("chiudi", stato(), True, nome=N, lingua="en").risposta == \
+        "Elettra Lamborghini is already locked."
+    p = comandi.pianifica("caldo", stato(), True, "21", nome=N, lingua="en")
+    assert p.fatto == "Done: heating on at 21 degrees."
+    assert p.inviato.startswith("I've sent heating at 21 degrees to Elettra Lamborghini.")
+    assert comandi.pianifica("freddo", stato(), True, "40", lingua="en").risposta == \
+        "I can set the climate control between 18 and 32 degrees."
+    # Il comando mandato all'auto non dipende dalla lingua.
+    assert p.contenuto == comandi.pianifica("caldo", stato(), True, "21", lingua="it").contenuto
+
+
+def test_spagnolo_stato():
+    assert risposte.frase_batteria(stato(), None, "es") == \
+        "La batería está al 81 por ciento, con unos 218 kilómetros de autonomía."
+    assert risposte.frase_batteria(stato(), N, "es") == \
+        "Elettra Lamborghini tiene la batería al 81 por ciento, con unos 218 kilómetros de autonomía."
+    bolonia = dict(BOLOGNA, city="Bolonia")
+    assert risposte.frase_posizione(stato(), [], bolonia, N, "es") == \
+        "Elettra Lamborghini está en Piazza Maggiore 1, Bolonia."
+    assert risposte.frase_anomalie(stato(), N, lingua="es") == ("Todo en orden: Elettra Lamborghini tiene "
+                                                               "las puertas cerradas con llave, y las "
+                                                               "ventanillas y el maletero cerrados.")
+    assert risposte.frase_anomalie(stato(driverDoorLockStatus=False), N, lingua="es") == \
+        "Atención: las puertas de Elettra Lamborghini no están cerradas con llave."
+    assert risposte.frase_anomalie(stato(bbcmBackDoorStatus=True, leftRearTirePressureState=1), lingua="es") == \
+        ("Atención: el coche tiene el maletero abierto y una presión anómala en el neumático "
+         "trasero izquierdo.")
+    riepilogo = risposte.frase_riepilogo(stato(), [], bolonia, N, "es")
+    assert riepilogo.count(N) == 1 and "Todo en orden: puertas cerradas con llave" in riepilogo
+
+
+def test_spagnolo_comandi():
+    assert comandi.pianifica("chiudi", stato(driverDoorLockStatus=False, speed=30), True, nome=N,
+                             lingua="es").risposta == "Elettra Lamborghini está en movimiento: no lo cierro a distancia."
+    p = comandi.pianifica("chiudi", stato(driverDoorLockStatus=False), True, lingua="es")
+    assert p.fatto == "Hecho: el coche tiene las puertas cerradas con llave."
+    assert p.inviato.startswith("He enviado al coche la orden de cierre.")
+    assert comandi.pianifica("caldo", stato(), True, "22", lingua="es").fatto == \
+        "Hecho: calefacción encendida a 22 grados."
+    assert comandi.pianifica("spegni", stato(), True, lingua="es").risposta == "El climatizador ya está apagado."
+
+
+def test_luoghi_per_lingua():
+    casa = [{"nome": {"it": "a casa", "en": "at home", "es": "en casa"},
+             "lat": 44.4940, "lon": 11.3430, "raggio_m": 150}]
+    assert risposte.frase_posizione(stato(), casa, None, N, "it") == "Elettra Lamborghini è a casa."
+    assert risposte.frase_posizione(stato(), casa, None, N, "en") == "Elettra Lamborghini is at home."
+    assert risposte.frase_posizione(stato(), casa, None, N, "es") == "Elettra Lamborghini está en casa."
+    # Un nome semplice (stringa) vale per tutte le lingue.
+    assert risposte.luogo_noto(stato(), [dict(casa[0], nome="Casa")], "en") == "Casa"
 
 
 if __name__ == "__main__":

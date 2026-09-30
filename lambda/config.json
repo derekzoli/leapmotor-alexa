@@ -6,8 +6,9 @@
   "comandi": false,
   "pin": "",
   "ventola": 3,
+  "fuso_orario": 1,
   "luoghi": [
-    { "nome": "a casa", "lat": 0.0, "lon": 0.0, "raggio_m": 150 },
-    { "nome": "in ufficio", "lat": 0.0, "lon": 0.0, "raggio_m": 150 }
+    { "nome": { "it": "a casa", "en": "at home", "es": "en casa" }, "lat": 0.0, "lon": 0.0, "raggio_m": 150 },
+    { "nome": { "it": "in ufficio", "en": "at the office", "es": "en la oficina" }, "lat": 0.0, "lon": 0.0, "raggio_m": 150 }
   ]
 }
