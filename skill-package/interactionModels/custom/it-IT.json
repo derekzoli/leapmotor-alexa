@@ -101,11 +101,213 @@
             "novità"
           ]
         },
-        { "name": "AMAZON.CancelIntent", "samples": [] },
-        { "name": "AMAZON.HelpIntent", "samples": [] },
-        { "name": "AMAZON.StopIntent", "samples": [] },
-        { "name": "AMAZON.NavigateHomeIntent", "samples": [] },
-        { "name": "AMAZON.FallbackIntent", "samples": [] }
+        {
+          "name": "ChiudiAutoIntent",
+          "slots": [],
+          "samples": [
+            "chiudi l'auto",
+            "chiudi la macchina",
+            "chiudi l'auto a chiave",
+            "chiudi la macchina a chiave",
+            "blocca l'auto",
+            "blocca la macchina",
+            "blocca le portiere",
+            "chiudi le portiere",
+            "chiudi le porte",
+            "chiudi a chiave",
+            "chiudila",
+            "chiudila a chiave",
+            "chiudere l'auto",
+            "chiudere la macchina",
+            "chiudere l'auto a chiave",
+            "bloccare l'auto",
+            "bloccare le portiere"
+          ]
+        },
+        {
+          "name": "ChiudiFinestriniIntent",
+          "slots": [],
+          "samples": [
+            "chiudi i finestrini",
+            "chiudi tutti i finestrini",
+            "chiudi il finestrino",
+            "alza i finestrini",
+            "tira su i finestrini",
+            "chiudi i vetri",
+            "alza i vetri",
+            "chiudere i finestrini",
+            "chiudere tutti i finestrini",
+            "alzare i finestrini"
+          ]
+        },
+        {
+          "name": "ClimaIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "accendi il clima",
+            "accendi il clima a {temperatura} gradi",
+            "accendi il clima a {temperatura}",
+            "accendi il climatizzatore",
+            "accendi il climatizzatore a {temperatura} gradi",
+            "accendi il climatizzatore a {temperatura}",
+            "metti il clima",
+            "metti il clima a {temperatura} gradi",
+            "metti il clima a {temperatura}",
+            "attiva il clima",
+            "attiva il clima a {temperatura} gradi",
+            "attiva il clima a {temperatura}",
+            "imposta il clima a {temperatura} gradi",
+            "imposta la temperatura a {temperatura} gradi",
+            "porta la temperatura a {temperatura} gradi",
+            "metti la temperatura a {temperatura} gradi",
+            "prepara l'auto a {temperatura} gradi",
+            "prepara la macchina a {temperatura} gradi",
+            "prepara l'auto",
+            "prepara la macchina",
+            "accendere il clima",
+            "accendere il clima a {temperatura} gradi",
+            "accendere il clima a {temperatura}",
+            "accendere il climatizzatore",
+            "accendere il climatizzatore a {temperatura} gradi",
+            "accendere il climatizzatore a {temperatura}"
+          ]
+        },
+        {
+          "name": "RiscaldamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "accendi il riscaldamento",
+            "accendi il riscaldamento a {temperatura} gradi",
+            "accendi il riscaldamento a {temperatura}",
+            "accendi il caldo",
+            "accendi il caldo a {temperatura} gradi",
+            "accendi il caldo a {temperatura}",
+            "metti il caldo",
+            "metti il caldo a {temperatura} gradi",
+            "metti il caldo a {temperatura}",
+            "metti il riscaldamento",
+            "metti il riscaldamento a {temperatura} gradi",
+            "metti il riscaldamento a {temperatura}",
+            "scalda l'auto",
+            "scalda l'auto a {temperatura} gradi",
+            "scalda l'auto a {temperatura}",
+            "scalda la macchina",
+            "scalda la macchina a {temperatura} gradi",
+            "scalda la macchina a {temperatura}",
+            "riscalda l'auto",
+            "riscalda l'auto a {temperatura} gradi",
+            "riscalda l'auto a {temperatura}",
+            "riscalda la macchina",
+            "riscalda la macchina a {temperatura} gradi",
+            "riscalda la macchina a {temperatura}",
+            "accendere il riscaldamento",
+            "accendere il riscaldamento a {temperatura} gradi",
+            "accendere il riscaldamento a {temperatura}",
+            "scaldare l'auto",
+            "scaldare l'auto a {temperatura} gradi",
+            "scaldare l'auto a {temperatura}",
+            "scaldare la macchina",
+            "scaldare la macchina a {temperatura} gradi",
+            "scaldare la macchina a {temperatura}"
+          ]
+        },
+        {
+          "name": "RaffreddamentoIntent",
+          "slots": [
+            {
+              "name": "temperatura",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "accendi l'aria condizionata",
+            "accendi l'aria condizionata a {temperatura} gradi",
+            "accendi l'aria condizionata a {temperatura}",
+            "accendi il condizionatore",
+            "accendi il condizionatore a {temperatura} gradi",
+            "accendi il condizionatore a {temperatura}",
+            "accendi il freddo",
+            "accendi il freddo a {temperatura} gradi",
+            "accendi il freddo a {temperatura}",
+            "metti il freddo",
+            "metti il freddo a {temperatura} gradi",
+            "metti il freddo a {temperatura}",
+            "accendi il raffreddamento",
+            "accendi il raffreddamento a {temperatura} gradi",
+            "accendi il raffreddamento a {temperatura}",
+            "metti l'aria condizionata",
+            "metti l'aria condizionata a {temperatura} gradi",
+            "metti l'aria condizionata a {temperatura}",
+            "rinfresca l'auto",
+            "rinfresca l'auto a {temperatura} gradi",
+            "rinfresca l'auto a {temperatura}",
+            "rinfresca la macchina",
+            "rinfresca la macchina a {temperatura} gradi",
+            "rinfresca la macchina a {temperatura}",
+            "raffredda l'auto",
+            "raffredda l'auto a {temperatura} gradi",
+            "raffredda l'auto a {temperatura}",
+            "raffredda la macchina",
+            "raffredda la macchina a {temperatura} gradi",
+            "raffredda la macchina a {temperatura}",
+            "accendere l'aria condizionata",
+            "accendere l'aria condizionata a {temperatura} gradi",
+            "accendere l'aria condizionata a {temperatura}",
+            "rinfrescare l'auto",
+            "rinfrescare l'auto a {temperatura} gradi",
+            "rinfrescare l'auto a {temperatura}",
+            "rinfrescare la macchina",
+            "rinfrescare la macchina a {temperatura} gradi",
+            "rinfrescare la macchina a {temperatura}"
+          ]
+        },
+        {
+          "name": "SpegniClimaIntent",
+          "slots": [],
+          "samples": [
+            "spegni il clima",
+            "spegni il climatizzatore",
+            "spegni l'aria condizionata",
+            "spegni il condizionatore",
+            "spegni il riscaldamento",
+            "spegni il caldo",
+            "spegni il freddo",
+            "disattiva il clima",
+            "spegnere il clima",
+            "spegnere l'aria condizionata",
+            "spegnere il riscaldamento"
+          ]
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
       ],
       "types": []
     }

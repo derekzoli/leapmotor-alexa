@@ -1,19 +1,25 @@
 # Leapmotor per Alexa
 
-Skill Alexa **personale**, in italiano, per chiedere a voce lo stato della tua Leapmotor:
+Skill Alexa **personale**, in italiano, per chiedere a voce lo stato della tua Leapmotor e darle qualche comando:
 
 | Chiedi | Alexa risponde |
 |---|---|
 | *"Alexa, chiedi a mia lippina **quanto è carica**"* | «La batteria è all'81 per cento, circa 218 chilometri di autonomia.» Se è in carica aggiunge quanto manca e fino a che percentuale. |
 | *"Alexa, chiedi a mia lippina **dov'è la macchina**"* | «L'auto si trova in Piazza Maggiore 1, a Bologna.» Oppure «L'auto è a casa», se configuri i tuoi luoghi. Nell'app Alexa arriva anche il link alla mappa. |
 | *"Alexa, chiedi a mia lippina **se è tutto a posto**"* | Portiere, finestrini, baule, gomme, e se l'auto ferma non è chiusa a chiave. |
-| *"Alexa, **apri** mia lippina"* | Tutte e tre le cose insieme. |
+| *"Alexa, **apri** mia lippina"* | Tutte e tre le cose insieme, compreso se il clima è acceso. |
+| *"Alexa, chiedi a mia lippina di **chiudere l'auto**"* | La chiude a chiave (se è ferma e non è già chiusa). |
+| *"Alexa, chiedi a mia lippina di **chiudere i finestrini**"* | Li chiude, se ce n'è uno aperto. |
+| *"Alexa, chiedi a mia lippina di **accendere il riscaldamento a 22 gradi**"* | Anche *aria condizionata*, oppure solo *il clima*: allora sceglie caldo o freddo in base alla temperatura esterna. Temperature da 18 a 32 gradi. |
+| *"Alexa, chiedi a mia lippina di **spegnere il clima**"* | Lo spegne. |
 
 Se l'auto non si fa sentire dal cloud da più di 6 ore, Alexa dice quando è stato l'ultimo contatto.
 
-> **Solo lettura.** La skill non conosce il PIN del veicolo: non può aprire, chiudere, accendere il clima o altro.
+> **Niente aperture.** I comandi si attivano solo se lo decidi tu in `config.json`, e anche così la skill può soltanto **chiudere** l'auto e i finestrini e comandare il clima. Aprire l'auto o i finestrini non è previsto, di proposito: una skill vocale la può usare chiunque sia nella stanza, compresa la TV.
 
 > **Progetto non ufficiale**, senza alcun rapporto con Leapmotor o Amazon. Usa API del cloud Leapmotor non documentate, che possono cambiare senza preavviso. Provato su una **Leapmotor T03**; il codice legge anche il formato di stato di C10/B10, ma su quei modelli non è stato verificato.
+
+Cosa è cambiato tra una versione e l'altra: [note degli aggiornamenti](CHANGELOG.md).
 
 La skill resta in **modalità sviluppo** sul tuo account Amazon: non serve pubblicarla né farla certificare, e funziona su tutti i tuoi Echo e nell'app Alexa.
 
@@ -32,7 +38,9 @@ Il cloud Leapmotor tiene **una sola sessione per account**. Se la skill usasse l
 
 1. Crea un nuovo account Leapmotor con un'altra email.
 2. Dall'account proprietario **condividi l'auto** con il nuovo account.
-3. Entra **una volta** nell'app ufficiale con il nuovo account: accetta i termini e controlla che l'auto compaia. Poi esci. Da qui in avanti quell'account lo usa solo la skill.
+3. Entra **una volta** nell'app ufficiale con il nuovo account: accetta i termini e controlla che l'auto compaia.
+4. Solo se vuoi i comandi: sempre con il nuovo account, imposta nell'app il **PIN dei comandi remoti** e prova un comando qualunque, per essere sicuro che quell'account li possa dare.
+5. Esci. Da qui in avanti quell'account lo usa solo la skill.
 
 ## 2. Scarica il progetto e i certificati
 
@@ -49,7 +57,7 @@ pip install -r lambda/requirements.txt truststore
 python prova_locale.py
 ```
 
-Lo script chiede email e password del nuovo account senza salvarle, e stampa le frasi che direbbe Alexa. Stampa anche le coordinate attuali dell'auto, comode per configurare i luoghi (passo 6).
+Lo script chiede email e password del nuovo account senza salvarle, e stampa le frasi che direbbe Alexa, il nickname dell'auto e i comandi che il cloud le concede. Non invia comandi. Stampa anche le coordinate attuali dell'auto, comode per configurare i luoghi (passo 6).
 
 ## 4. Crea lo zip del codice
 
@@ -82,7 +90,7 @@ Vai su <https://developer.amazon.com/alexa/console/ask> **con lo stesso account 
 1. A sinistra apri **Interaction Model** → **JSON Editor**.
 2. Trascina il file `skill-package/interactionModels/custom/it-IT.json`.
 3. **Save**, poi **Build skill**, e aspetta *Build Successful*.
-4. Controlla che a sinistra, sotto *Intents*, compaiano **BatteriaIntent**, **PosizioneIntent**, **AnomalieIntent** e **RiepilogoIntent**. Se mancano, Alexa risponde con l'aiuto a qualunque domanda: ricarica il JSON e rifai la build.
+4. Controlla che a sinistra, sotto *Intents*, ci siano tutti: **BatteriaIntent**, **PosizioneIntent**, **AnomalieIntent**, **RiepilogoIntent**, **ChiudiAutoIntent**, **ChiudiFinestriniIntent**, **ClimaIntent**, **RiscaldamentoIntent**, **RaffreddamentoIntent** e **SpegniClimaIntent**. Se mancano, Alexa risponde con l'aiuto: ricarica il JSON e rifai la build.
 
 ## 6. Carica il codice e configura (scheda **Code**)
 
@@ -94,6 +102,10 @@ Vai su <https://developer.amazon.com/alexa/console/ask> **con lo stesso account 
   "email": "email-dell-account-della-skill@esempio.it",
   "password": "la-sua-password",
   "vin": "",
+  "nome": "",
+  "comandi": false,
+  "pin": "",
+  "ventola": 3,
   "luoghi": [
     { "nome": "a casa", "lat": 44.493889, "lon": 11.342778, "raggio_m": 150 },
     { "nome": "in ufficio", "lat": 0.0, "lon": 0.0, "raggio_m": 150 }
@@ -105,6 +117,10 @@ Vai su <https://developer.amazon.com/alexa/console/ask> **con lo stesso account 
 |---|---|
 | `email`, `password` | l'account Leapmotor del passo 1 |
 | `vin` | solo se sull'account ci sono più auto; vuoto = la prima |
+| `nome` | facoltativo: come Alexa chiama l'auto nelle risposte («Elettra Lamborghini è chiusa a chiave») e nella scheda. Vuoto = il nome dato all'auto nell'app ufficiale; se non c'è neanche quello, «l'auto» |
+| `comandi` | `true` per abilitare chiusura e clima, `false` (predefinito) per una skill di sola lettura |
+| `pin` | il PIN dei comandi remoti del nuovo account (passo 1.4), tra virgolette: `"1234"`. Serve solo con `comandi: true` |
+| `ventola` | velocità della ventola quando Alexa accende il clima, da 1 a 7 |
 | `luoghi` | facoltativo. Se l'auto è entro `raggio_m` metri, Alexa dice il `nome` («L'auto è a casa») invece dell'indirizzo. Il nome viene letto così com'è: «a casa», «in ufficio», «dai nonni». Le voci con coordinate 0,0 vengono ignorate. |
 
 Attenzione a virgole e virgolette: un errore di sintassi blocca la skill all'avvio. Se la password contiene `"` scrivila come `\"`.
@@ -133,8 +149,19 @@ Non servono le parole esatte, ma queste funzionano di sicuro (dopo *"Alexa, chie
 | Posizione | dov'è la macchina · dove si trova · dove l'ho parcheggiata · dove ho lasciato l'auto |
 | Anomalie | è tutto a posto · ci sono anomalie · è chiusa · ho chiuso la macchina · ci sono finestrini aperti · come sono le gomme |
 | Tutto | come sta la macchina · fammi un riepilogo · dimmi tutto |
+| Chiudere | chiudi l'auto · blocca le portiere · chiudi i finestrini · alza i finestrini |
+| Clima | accendi il clima a 21 gradi · accendi il riscaldamento · scalda la macchina a 23 gradi · accendi l'aria condizionata a 20 · rinfresca l'auto · spegni il clima |
+
+Vanno bene anche con l'infinito: *"…chiedi a mia lippina di chiudere l'auto"*.
 
 Dopo ogni risposta la skill si chiude: per un'altra domanda ricomincia con *"Alexa, chiedi a…"*.
+
+### Cosa aspettarsi dai comandi
+
+- Alexa ha circa **8 secondi** per rispondere, e l'auto a volte impiega di più per confermare. Se la conferma arriva in tempo senti *«Fatto: l'auto è chiusa a chiave»*, altrimenti *«Ho mandato all'auto il comando di chiusura»*.
+- Il cloud Leapmotor risponde "ok" anche quando l'auto ignora un comando. **La conferma vera è chiedere lo stato** un minuto dopo: *"…è tutto a posto?"* dice se è chiusa, se ci sono finestrini aperti e se il clima è acceso.
+- Prima di ogni comando la skill legge lo stato: se l'auto è già chiusa o il clima già spento te lo dice e non manda niente. Se l'auto è in movimento non la chiude.
+- Se il PIN viene rifiutato la skill **non ritenta**: troppi PIN sbagliati possono bloccare i comandi remoti dell'account.
 
 ---
 
@@ -157,6 +184,12 @@ Se Alexa non capisce una frase che usi spesso, aggiungila tra i `samples` dell'i
 ### Aggiornare il codice
 
 **Reimportare lo zip sovrascrive `config.json`** con i segnaposto, e dovresti riscrivere email e password. Per una modifica piccola conviene aprire il file nella scheda Code, incollare la nuova versione, poi **Save** e **Deploy**.
+
+Per passare a una versione nuova del progetto:
+1. ricarica il modello vocale (`it-IT.json` nel JSON Editor, **Save**, **Build skill**);
+2. prima di importare, **copiati da parte** il `config.json` attuale dalla console;
+3. reimporta lo zip e rimetti i tuoi dati nel nuovo `config.json`, aggiungendo i campi nuovi se ce ne sono;
+4. **Save** → **Deploy**.
 
 ## Condividere con la famiglia
 
@@ -181,6 +214,9 @@ Tutti interrogheranno **la tua** auto: le credenziali sono una sola, in `config.
 | Nei log: `urllib3 v2 only supports OpenSSL 1.1.1+` | `requirements.txt` vecchio. Deve contenere `urllib3<2`, perché il Python di Alexa-hosted usa OpenSSL 1.0.2. |
 | Nei log: `JSONDecodeError` | `config.json` non è JSON valido (virgola o virgoletta). |
 | *«…non è ancora configurata…»* | `config.json` contiene ancora i segnaposto. |
+| *«I comandi sono disattivati…»* / *«…serve il PIN…»* | In `config.json` metti `"comandi": true` e il PIN tra virgolette. |
+| *«Il cloud Leapmotor non ha accettato il PIN»* | PIN sbagliato, o l'account della skill non ha un PIN per i comandi (passo 1.4). Correggilo **prima** di riprovare. |
+| *«Leapmotor non consente questo comando…»* | Il cloud non concede quel comando alla tua auto. `prova_locale.py` stampa i comandi concessi. |
 | *«Mancano i certificati dell'app…»* | `app.crt` e `app.key` non sono nella cartella `lambda` dello zip (passo 2). |
 | *«Non riesco ad accedere all'account Leapmotor…»* | Email o password sbagliate, oppure account mai usato nell'app ufficiale (passo 1). |
 | *«Il cloud Leapmotor non risponde…»* | Cloud lento o irraggiungibile: riprova. |
@@ -196,15 +232,16 @@ L'indirizzo si ricava da OpenStreetMap (Nominatim), gratis e senza chiave.
 
 | File | Cosa fa |
 |---|---|
-| `lambda/lambda_function.py` | gestori Alexa: domande, aiuto, errori |
-| `lambda/leapcloud.py` | login mTLS, elenco veicoli, lettura stato |
+| `lambda/lambda_function.py` | gestori Alexa: domande, comandi, aiuto, errori |
+| `lambda/leapcloud.py` | login mTLS, elenco veicoli, lettura stato, invio comandi |
+| `lambda/comandi.py` | cosa mandare all'auto e cosa rispondere; niente rete, si prova offline |
 | `lambda/risposte.py` | dallo stato alle frasi italiane; niente rete, si prova offline |
 | `lambda/posizione.py` | indirizzo dalle coordinate |
 | `lambda/config.json` | credenziali e luoghi (solo segnaposto nel repository) |
 | `skill-package/…/it-IT.json` | modello vocale: nome della skill e frasi |
 | `prova_locale.py` | prova dal PC con l'account vero |
 | `crea_zip.py` | crea lo zip da importare |
-| `test/test_offline.py` | crittografia contro i vettori di riferimento e frasi su uno stato reale della T03 |
+| `test/test_offline.py` | crittografia contro i vettori di riferimento, frasi e comandi su uno stato reale della T03 |
 
 Test: `python test/test_offline.py` (o `python -m pytest test`).
 

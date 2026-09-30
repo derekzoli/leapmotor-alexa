@@ -14,6 +14,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lambda"))
 
+import comandi  # noqa: E402
 import leapcloud  # noqa: E402
 import risposte  # noqa: E402
 
@@ -85,7 +86,7 @@ def test_tutto_a_posto():
 def test_anomalie_multiple():
     s = stato(driverDoorLockStatus=False, rightRearWindowPercent=30, bbcmBackDoorStatus=True)
     assert risposte.frase_anomalie(s) == \
-        "Attenzione: c'è un finestrino aperto, il baule è aperto e non è chiusa a chiave."
+        "Attenzione: l'auto ha un finestrino aperto e il baule aperto, e non è chiusa a chiave."
 
 
 def test_non_chiusa_ma_in_marcia_non_e_anomalia():
@@ -95,7 +96,8 @@ def test_non_chiusa_ma_in_marcia_non_e_anomalia():
 
 def test_gomma_sgonfia():
     s = stato(leftRearTirePressureState=1)
-    assert "la gomma posteriore sinistra ha una pressione anomala" in risposte.frase_anomalie(s)
+    assert risposte.frase_anomalie(s) == \
+        "Attenzione: l'auto ha una pressione anomala sulla gomma posteriore sinistra."
 
 
 def test_posizione_indirizzo():
@@ -108,6 +110,39 @@ def test_posizione_luogo_noto():
     s = stato()
     casa = [{"nome": "a casa", "lat": 44.4940, "lon": 11.3430, "raggio_m": 150}]
     assert risposte.frase_posizione(s, casa, None) == "L'auto è a casa."
+
+
+def test_nome_auto():
+    assert risposte.nome_parlato("ElettraLamborghini") == "Elettra Lamborghini"
+    assert risposte.nome_parlato("  ") is None
+    ind = {"road": "Piazza Maggiore", "house_number": "1", "city": "Bologna"}
+    assert risposte.frase_posizione(stato(), [], ind, "Elettra Lamborghini") == \
+        "Elettra Lamborghini si trova in Piazza Maggiore 1, a Bologna."
+    assert risposte.frase_riepilogo(stato(), [], ind, "Elettra Lamborghini").startswith(
+        "Elettra Lamborghini si trova in Piazza Maggiore 1, a Bologna. La batteria è all'81 per cento")
+
+
+def test_nome_in_tutte_le_risposte():
+    n = "Elettra Lamborghini"
+    assert risposte.frase_anomalie(stato(), n) == \
+        "Tutto a posto: Elettra Lamborghini è chiusa a chiave, con finestrini e baule chiusi."
+    assert risposte.frase_anomalie(stato(driverDoorLockStatus=False), n) == \
+        "Attenzione: Elettra Lamborghini non è chiusa a chiave."
+    assert risposte.frase_batteria(stato(), n) == \
+        "Elettra Lamborghini è carica all'81 per cento, con circa 218 chilometri di autonomia."
+    riepilogo = risposte.frase_riepilogo(stato(), [], None, n)
+    assert riepilogo.count(n) == 1 and "Tutto a posto: è chiusa a chiave" in riepilogo
+    assert comandi.pianifica("chiudi", stato(), True, nome=n).risposta == "Elettra Lamborghini è già chiusa a chiave."
+    p = comandi.pianifica("caldo", stato(), True, "22", nome=n)
+    assert p.inviato.startswith("Ho mandato a Elettra Lamborghini: riscaldamento a 22 gradi.")
+    assert comandi.pianifica("finestrini", stato(leftRearWindowPercent=5), True, nome="Alba").inviato \
+        .startswith("Ho mandato ad Alba la chiusura dei finestrini.")
+
+
+def test_posizione_senza_indirizzo_in_movimento():
+    assert risposte.frase_posizione(stato(speed=50), [], None) == (
+        "Non riesco a ricavare l'indirizzo dell'auto, ma trovi la posizione nella scheda dell'app Alexa. "
+        "L'auto è in movimento.")
 
 
 def test_eta_dato():
@@ -123,6 +158,71 @@ def test_ora_solare_e_legale():
     # 15 gennaio 2026 12:00 UTC -> 13:00; 15 luglio 2026 12:00 UTC -> 14:00
     assert risposte.ora_italiana(1768478400000).hour == 13
     assert risposte.ora_italiana(1784116800000).hour == 14
+
+
+# ---- Comandi ------------------------------------------------------------------------
+
+SPENTO_T03 = ('{"circle":"out","mode":"wind","operate":"off","position":"all",'
+              '"temperature":"26","windlevel":"3","wshld":"0"}')
+
+
+def test_chiudi_gia_chiusa():
+    assert comandi.pianifica("chiudi", stato(), True).risposta == "L'auto è già chiusa a chiave."
+
+
+def test_chiudi_aperta():
+    p = comandi.pianifica("chiudi", stato(driverDoorLockStatus=False), True)
+    assert (p.cmd_id, p.contenuto) == ("110", '{"value":"lock"}')
+    assert p.fatto == "Fatto: l'auto è chiusa a chiave."
+
+
+def test_chiudi_in_marcia_no():
+    p = comandi.pianifica("chiudi", stato(driverDoorLockStatus=False, speed=40), True)
+    assert p.cmd_id is None and "movimento" in p.risposta
+
+
+def test_finestrini():
+    assert comandi.pianifica("finestrini", stato(), True).risposta == "I finestrini sono già chiusi."
+    p = comandi.pianifica("finestrini", stato(leftRearWindowPercent=40), True)
+    assert (p.cmd_id, p.contenuto) == ("230", '{"value":"0"}')
+
+
+def test_spegni_clima_t03():
+    assert comandi.pianifica("spegni", stato(), True).risposta == "Il clima è già spento."
+    p = comandi.pianifica("spegni", stato(acSwitch=True), True)
+    # Lo stesso payload che la T03 esegue davvero (verificato sull'auto il 6 agosto 2026).
+    assert (p.cmd_id, p.contenuto) == ("170", SPENTO_T03)
+    assert comandi.pianifica("spegni", stato(acSwitch=True), False).contenuto == '{"operate":"off"}'
+
+
+def test_riscaldamento():
+    p = comandi.pianifica("caldo", stato(), True, "22")
+    assert p.contenuto == ('{"circle":"out","mode":"hot","operate":"manual","position":"all",'
+                           '"temperature":"22","windlevel":"3","wshld":"0"}')
+    assert p.fatto == "Fatto: riscaldamento acceso a 22 gradi."
+
+
+def test_clima_sceglie_dalla_temperatura_esterna():
+    estate = comandi.pianifica("clima", stato(outdoorTemp=35), True, "22")
+    inverno = comandi.pianifica("clima", stato(outdoorTemp=4), True, "22")
+    assert '"mode":"cold"' in estate.contenuto and estate.fatto == "Fatto: aria condizionata accesa a 22 gradi."
+    assert '"mode":"hot"' in inverno.contenuto
+
+
+def test_clima_altri_modelli_automatico():
+    p = comandi.pianifica("clima", stato(), False, "21")
+    assert '"mode":"nohotcold","operate":"auto"' in p.contenuto
+
+
+def test_temperatura_predefinita_e_limiti():
+    assert '"temperature":"22"' in comandi.pianifica("freddo", stato(), True, None).contenuto
+    assert comandi.pianifica("caldo", stato(), True, "35").risposta == "Posso impostare il clima tra 18 e 32 gradi."
+    assert comandi.pianifica("caldo", stato(), True, "?").cmd_id == "170"
+
+
+def test_stato_dice_clima_acceso():
+    assert risposte.frase_anomalie(stato(acSwitch=True, acSetting=21)).endswith("Il clima è acceso a 21 gradi.")
+    assert "clima" not in risposte.frase_anomalie(stato())
 
 
 if __name__ == "__main__":

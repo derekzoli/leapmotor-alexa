@@ -2,6 +2,10 @@
   "email": "INSERISCI-QUI-EMAIL-DEL-TERZO-ACCOUNT",
   "password": "INSERISCI-QUI-LA-PASSWORD",
   "vin": "",
+  "nome": "",
+  "comandi": false,
+  "pin": "",
+  "ventola": 3,
   "luoghi": [
     { "nome": "a casa", "lat": 0.0, "lon": 0.0, "raggio_m": 150 },
     { "nome": "in ufficio", "lat": 0.0, "lon": 0.0, "raggio_m": 150 }

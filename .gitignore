@@ -7,6 +7,7 @@ lambda/app_key.pem
 # Prodotti in locale
 *.zip
 ultimo_stato.json
+ultimo_elenco_veicoli.json
 __pycache__/
 *.pyc
 .venv/

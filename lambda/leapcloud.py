@@ -1,10 +1,10 @@
 """
-Client minimo del cloud Leapmotor, in SOLA LETTURA.
+Client minimo del cloud Leapmotor.
 
-Porting del sottoinsieme che serve alla skill (login, elenco veicoli, stato)
-dall'app MyLeapCar (LeapCrypto.kt / LeapClient.kt), a sua volta portata da
-markoceri/leapmotor-api. Nessun comando remoto: la skill non conosce il PIN
-del veicolo e quindi non puo' aprire, chiudere o accendere nulla.
+Porting del sottoinsieme che serve alla skill (login, elenco veicoli, stato,
+comandi remoti) dall'app MyLeapCar (LeapCrypto.kt / LeapClient.kt), a sua
+volta portata da markoceri/leapmotor-api. Quali comandi la skill possa dare
+lo decide lambda_function.py: qui c'e' solo il trasporto.
 
 MD5, SM4 con round key fisse e la mancata verifica del certificato server
 sono imposti dal protocollo, non sono scelte di sicurezza di questo codice.
@@ -23,7 +23,8 @@ from urllib.parse import quote
 
 import requests
 import urllib3
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import padding, serialization
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import pkcs12
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -58,7 +59,8 @@ def app_cert():
 
 
 class LeapError(Exception):
-    """kind: 'rete', 'credenziali', 'certificati_app', 'certificato', 'sessione', 'server'."""
+    """kind: 'rete', 'credenziali', 'certificati_app', 'certificato', 'pin',
+    'non_consentito', 'sessione', 'server'."""
 
     def __init__(self, kind, detail):
         super().__init__("%s: %s" % (kind, detail))
@@ -172,8 +174,15 @@ def login_headers(device_id, username, password):
     return _headers(n, device_id, ts, sha256_hex(text))
 
 
-def signed_headers(sign_key, device_id, vin=None):
-    """Firma standard: valori dei campi ordinati per chiave, concatenati."""
+def signed_headers(sign_key, device_id, vin=None, extra=None):
+    """
+    Firma standard: valori dei campi ordinati per chiave, concatenati.
+
+    `extra` sono i parametri del body che entrano nella firma (PIN cifrato,
+    comando, id dell'esito): l'ordine alfabetico delle chiavi da' esattamente
+    le concatenazioni fisse di leapmotor-api per verifica PIN, invio comando
+    ed esito.
+    """
     n = _nonce()
     ts = str(int(time.time() * 1000))
     fields = {
@@ -188,8 +197,26 @@ def signed_headers(sign_key, device_id, vin=None):
     }
     if vin is not None:
         fields["vin"] = vin
+    fields.update(extra or {})
     text = "".join(fields[k] for k in sorted(fields))
     return _headers(n, device_id, ts, hmac_hex(sign_key, text))
+
+
+FALLBACK_AES_KEY = "f1cf0c025baec0e2"
+FALLBACK_AES_IV = "6b6a1fe94e133fd7"
+
+
+def encrypt_operate_password(pin, token):
+    """PIN del veicolo in AES-128-CBC, con chiave e IV ricavati dal token di sessione."""
+    if not token or len(token) < 64:
+        key, iv = FALLBACK_AES_KEY, FALLBACK_AES_IV
+    else:
+        key = hashlib.md5(token[:32].encode("utf-8")).hexdigest()[8:24]
+        iv = hashlib.md5(token[32:64].encode("utf-8")).hexdigest()[8:24]
+    padder = padding.PKCS7(128).padder()
+    data = padder.update(pin.encode("utf-8")) + padder.finalize()
+    enc = Cipher(algorithms.AES(key.encode("utf-8")), modes.CBC(iv.encode("utf-8"))).encryptor()
+    return base64.b64encode(enc.update(data) + enc.finalize()).decode("ascii")
 
 
 def session_device_id(token, fallback):
@@ -207,6 +234,24 @@ def session_device_id(token, fallback):
 
 # ---- Client --------------------------------------------------------------------------
 
+class Veicolo:
+    def __init__(self, v):
+        self.vin = v["vin"]
+        self.car_type = v.get("carType", "") or ""
+        # `vinNickname` e' il nome dato all'auto nell'app; `nickName` invece e'
+        # il nickname dell'UTENTE (vedi Vehicle.from_dict in leapmotor-api).
+        self.nickname = (v.get("vinNickname") or "").strip()
+        # Codici dei comandi che il cloud concede a QUESTA auto: la T03 ne ha pochi.
+        self.rights = [r.strip() for r in str(v.get("rightList") or "").split(",") if r.strip()]
+
+    @property
+    def is_t03(self):
+        return self.car_type.upper() == "T03"
+
+    def consente(self, cmd_id):
+        return not self.rights or cmd_id in self.rights
+
+
 class LeapCloud:
     """Una istanza per container Lambda: la sessione sopravvive fra le richieste."""
 
@@ -220,7 +265,9 @@ class LeapCloud:
         self.user_id = None
         self.token = None
         self.sign_key = None
-        self.vehicle = None  # (vin, carType)
+        self.vehicle = None  # Veicolo
+        self.ultimo_elenco = None
+        self.cert_synced = False
 
     # -- HTTP --
 
@@ -252,7 +299,8 @@ class LeapCloud:
             raise LeapError("server", "%s: risposta non JSON (HTTP %s)" % (label, resp.status_code))
         if data.get("code", -1) != 0:
             msg = data.get("message") or resp.text[:160]
-            raise LeapError("credenziali" if label == "login" else "server", "%s: %s" % (label, msg))
+            kind = {"login": "credenziali", "verifica PIN": "pin"}.get(label, "server")
+            raise LeapError(kind, "%s: %s" % (label, msg))
         return data
 
     def _auth(self, headers):
@@ -284,6 +332,7 @@ class LeapCloud:
         self.sign_key = derive_sign_key(
             data.get("signIkm", ""), data.get("signSalt", ""), data.get("signInfo", ""))
         self._load_account_cert(data)
+        self.cert_synced = False
 
     def _load_account_cert(self, data):
         try:
@@ -310,15 +359,23 @@ class LeapCloud:
             ))
         self.account_cert = (cert_path, key_path)
 
-    def _with_session(self, call):
-        """Login se serve; se il cloud rifiuta il token, un secondo tentativo dopo il login."""
+    def _with_session(self, call, prudente=False):
+        """
+        Login se serve; se il cloud rifiuta la sessione, un secondo tentativo dopo il login.
+
+        prudente=True (comandi): si ritenta solo se l'errore parla di token, come
+        nell'app. Ripetere alla cieca vorrebbe dire mandare due volte il PIN,
+        e un PIN sbagliato ripetuto puo' bloccare i comandi remoti.
+        """
         if self.token is None:
             self.login()
             return call()
         try:
             return call()
         except LeapError as exc:
-            if exc.kind in ("rete", "credenziali", "certificati_app"):
+            if exc.kind in ("rete", "credenziali", "certificati_app", "pin", "non_consentito"):
+                raise
+            if prudente and "token" not in exc.detail.lower() and exc.kind != "sessione":
                 raise
             self.login()
             return call()
@@ -331,11 +388,12 @@ class LeapCloud:
             self._auth(signed_headers(self.sign_key, self.device_id)),
             "", self.account_cert, "elenco veicoli",
         ).get("data") or {}
+        self.ultimo_elenco = data  # grezzo, per prova_locale.py
         out = []
         for bucket in ("bindcars", "sharedcars"):
             for v in data.get(bucket) or []:
                 if v.get("vin"):
-                    out.append((v["vin"], v.get("carType", "")))
+                    out.append(Veicolo(v))
         return out
 
     def _pick_vehicle(self, wanted_vin):
@@ -345,19 +403,74 @@ class LeapCloud:
         if not cars:
             raise LeapError("server", "nessun veicolo su questo account")
         if wanted_vin:
-            cars = [c for c in cars if c[0].upper() == wanted_vin.upper()] or cars
+            cars = [c for c in cars if c.vin.upper() == wanted_vin.upper()] or cars
         self.vehicle = cars[0]
         return self.vehicle
 
     def raw_status(self, wanted_vin=None):
         """Il campo `data` della risposta di stato, cosi' come arriva."""
         def call():
-            vin, car_type = self._pick_vehicle(wanted_vin)
-            t = car_type.upper()
-            path = "c10" if t in ("B10", "B11", "B05") else (car_type.lower() or "c10")
+            v = self._pick_vehicle(wanted_vin)
+            t = v.car_type.upper()
+            path = "c10" if t in ("B10", "B11", "B05") else (v.car_type.lower() or "c10")
             return self._post(
                 "/carownerservice/oversea/vehicle/v1/status/get/" + path,
-                self._auth(signed_headers(self.sign_key, self.device_id, vin=vin)),
-                "vin=" + q(vin), self.account_cert, "stato veicolo",
+                self._auth(signed_headers(self.sign_key, self.device_id, vin=v.vin)),
+                "vin=" + q(v.vin), self.account_cert, "stato veicolo",
             ).get("data") or {}
         return self._with_session(call)
+
+    # -- Comandi --
+
+    def comando(self, pin, cmd_id, contenuto, scadenza, wanted_vin=None):
+        """
+        Invia un comando remoto e aspetta la conferma dell'auto fino a `scadenza`
+        (un time.time()). True = l'auto ha confermato, False = inviato ma non
+        ancora confermato: Alexa non puo' aspettare i 20-30 secondi che a volte
+        servono. `contenuto` e' il JSON del comando gia' come stringa: entra
+        nella firma cosi' com'e', quindi ordine delle chiavi e spazi contano.
+        """
+        def invia():
+            v = self._pick_vehicle(wanted_vin)
+            if not v.consente(cmd_id):
+                raise LeapError("non_consentito", "comando %s non concesso a questa auto" % cmd_id)
+            op = encrypt_operate_password(pin, self.token)
+            if not self.cert_synced:
+                # Firmata con l'account ma inviata con il certificato dell'APP.
+                self._post("/carownerservice/oversea/vehicle/v1/cert/sync",
+                           self._auth(signed_headers(self.sign_key, self.device_id)),
+                           "", self.app_cert, "sync certificato")
+                self.cert_synced = True
+            self._post(
+                "/carownerservice/oversea/vehicle/v1/operPwd/verify",
+                self._auth(signed_headers(self.sign_key, self.device_id, vin=v.vin,
+                                          extra={"operatePassword": op})),
+                "operatePassword=" + q(op) + "&vin=" + q(v.vin), self.account_cert, "verifica PIN",
+            )
+            data = self._post(
+                "/carownerservice/oversea/vehicle/v1/app/remote/ctl",
+                self._auth(signed_headers(self.sign_key, self.device_id, vin=v.vin, extra={
+                    "cmdContent": contenuto, "cmdId": cmd_id, "operatePassword": op})),
+                "cmdContent=" + q(contenuto) + "&vin=" + q(v.vin) + "&cmdId=" + q(cmd_id)
+                + "&operatePassword=" + q(op),
+                self.account_cert, "comando remoto",
+            ).get("data") or {}
+            return str(data.get("remoteCtlId") or "") if isinstance(data, dict) else ""
+
+        ctl_id = self._with_session(invia, prudente=True)
+        if not ctl_id:
+            return False
+        while time.time() + 1.0 < scadenza:
+            time.sleep(1.0)
+            try:
+                esito = self._post(
+                    "/carownerservice/oversea/vehicle/v1/app/remote/ctl/result/query",
+                    self._auth(signed_headers(self.sign_key, self.device_id,
+                                              extra={"remoteCtlId": ctl_id})),
+                    "remoteCtlId=" + q(ctl_id), self.account_cert, "esito comando",
+                )
+            except LeapError:
+                return False  # il comando e' partito: un esito illeggibile non e' un errore
+            if esito.get("data") == 1:
+                return True
+        return False

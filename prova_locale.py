@@ -5,6 +5,7 @@ Prova dal PC, con l'account vero, prima di caricare la skill su Amazon.
 
 Chiede email e password (non le salva da nessuna parte), fa login e lettura
 dello stato come fara' la skill, e stampa i tempi e le frasi che Alexa direbbe.
+Non invia comandi all'auto: quelli si provano direttamente con Alexa.
 """
 
 import getpass
@@ -49,8 +50,15 @@ except LeapError as exc:
         print("Email o password non accettate dal cloud Leapmotor.")
     sys.exit(1)
 
-vin, car_type = cloud.vehicle
-print("\nVeicolo: %s (%s)" % (vin, car_type))
+v = cloud.vehicle
+print("\nVeicolo: %s (%s)" % (v.vin, v.car_type))
+print("Nickname visto da questo account: %s" % (v.nickname or "(nessuno)"))
+with open(os.path.join(HERE, "ultimo_elenco_veicoli.json"), "w", encoding="utf-8") as f:
+    json.dump(cloud.ultimo_elenco, f, ensure_ascii=False, indent=2)
+print("Elenco veicoli completo salvato in ultimo_elenco_veicoli.json")
+print("Comandi concessi dal cloud: %s" % (", ".join(v.rights) or "(elenco non fornito)"))
+for cmd, cosa in (("110", "chiudere l'auto"), ("230", "finestrini"), ("170", "clima")):
+    print("  %s %s" % ("si'" if v.consente(cmd) else "NO ", cosa))
 print("Tempi: login %.1f s | primo stato %.1f s | stato con sessione gia' aperta %.1f s"
       % (t1 - t0, t2 - t1, t3 - t2))
 print("Alexa concede circa 8 secondi: il caso peggiore (container a freddo) e' login + primo stato = %.1f s"
@@ -65,10 +73,11 @@ indirizzo = None
 if s.lat is not None and not risposte.luogo_noto(s, luoghi):
     indirizzo = posizione.indirizzo(s.lat, s.lon)
 
+nome = risposte.nome_parlato(cfg.get("nome") or v.nickname)
 print("\n--- Cosa direbbe Alexa ---")
-print("Carica:    ", risposte.con_eta(risposte.frase_batteria(s), s))
-print("Posizione: ", risposte.con_eta(risposte.frase_posizione(s, luoghi, indirizzo), s))
-print("Anomalie:  ", risposte.con_eta(risposte.frase_anomalie(s), s))
+print("Carica:    ", risposte.con_eta(risposte.frase_batteria(s, nome), s))
+print("Posizione: ", risposte.con_eta(risposte.frase_posizione(s, luoghi, indirizzo, nome), s))
+print("Anomalie:  ", risposte.con_eta(risposte.frase_anomalie(s, nome), s))
 if s.lat is not None:
     print("\nMappa:", posizione.link_mappa(s.lat, s.lon))
     print("Coordinate per config.json (luoghi): \"lat\": %.6f, \"lon\": %.6f" % (s.lat, s.lon))

@@ -6,6 +6,7 @@ salvato, senza account ne' Alexa.
 """
 
 import math
+import re
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -96,6 +97,11 @@ class Stato:
         self.lat = lat if lat else None
         self.lon = lon if lon else None
 
+        ac = num("1938", "acSwitch")
+        self.clima_acceso = None if ac is None else ac == 1
+        self.temp_clima = _to_int(num("2183", "acSetting"))
+        self.temp_esterna = num("-", "outdoorTemp")
+
         ms = num("-", "collectTimeMs")
         self.rilevato_ms = int(ms) if ms else None
 
@@ -172,12 +178,34 @@ def al_percento(n):
     return ("all'%d per cento" if vocale else "al %d per cento") % n
 
 
-def frase_batteria(s):
+def cap(testo):
+    return testo[:1].upper() + testo[1:]
+
+
+def soggetto(nome):
+    """Il nome dell'auto, o "l'auto". Sempre al femminile, come in italiano
+    si fa con le auto anche quando il nome e' di marca ("la Ferrari")."""
+    return nome or "l'auto"
+
+
+def a_soggetto(nome):
+    """ "all'auto", "a Elettra Lamborghini", "ad Alba"."""
+    if not nome:
+        return "all'auto"
+    return ("ad " if nome[:1].lower() == "a" else "a ") + nome
+
+
+def frase_batteria(s, nome=None):
     if s.soc is None:
         return "Non ricevo il livello della batteria dall'auto."
-    frase = "La batteria è " + al_percento(s.soc)
-    if s.autonomia_km:
-        frase += ", circa %d chilometri di autonomia" % s.autonomia_km
+    if nome:
+        frase = "%s è carica %s" % (nome, al_percento(s.soc))
+        if s.autonomia_km:
+            frase += ", con circa %d chilometri di autonomia" % s.autonomia_km
+    else:
+        frase = "La batteria è " + al_percento(s.soc)
+        if s.autonomia_km:
+            frase += ", circa %d chilometri di autonomia" % s.autonomia_km
     frase += "."
     if s.in_carica:
         frase += " È in carica"
@@ -231,58 +259,102 @@ def frase_indirizzo(indirizzo):
     return ", ".join(parti) or None
 
 
-def frase_posizione(s, luoghi, indirizzo):
+def nome_parlato(nome):
+    """"ElettraLamborghini" -> "Elettra Lamborghini": attaccato, Alexa lo legge male."""
+    nome = re.sub(r"(?<=[a-zàèéìòù])(?=[A-Z])", " ", (nome or "").strip())
+    return nome or None
+
+
+def frase_posizione(s, luoghi, indirizzo, nome=None):
+    """`nome` (se c'e') prende il posto di "L'auto": qui nessun aggettivo da concordare."""
+    chi = cap(soggetto(nome))
     if s.lat is None or s.lon is None:
-        return "L'auto non comunica la posizione in questo momento."
+        return "%s non comunica la posizione in questo momento." % chi
     movimento = " ed è in movimento" if s.in_movimento else ""
     luogo = luogo_noto(s, luoghi)
     if luogo:
-        return "L'auto è %s%s." % (luogo, movimento)
+        return "%s è %s%s." % (chi, luogo, movimento)
     dove = frase_indirizzo(indirizzo)
     if dove:
-        return "L'auto si trova %s%s." % (dove, movimento)
-    return ("Non riesco a ricavare l'indirizzo, ma trovi la posizione "
-            "nella scheda dell'app Alexa%s." % movimento)
+        return "%s si trova %s%s." % (chi, dove, movimento)
+    frase = ("Non riesco a ricavare l'indirizzo %s, ma trovi la posizione nella scheda dell'app Alexa."
+             % ("di " + nome if nome else "dell'auto"))
+    if s.in_movimento:
+        frase += " %s è in movimento." % chi
+    return frase
 
 
-def anomalie(s):
-    elenco = []
+def _cose_che_ha(s):
+    """Le anomalie da dire come "l'auto ha …"."""
+    voci = []
     if s.portiere_aperte:
-        elenco.append("una portiera è aperta")
+        voci.append("una portiera aperta")
     if s.finestrini_aperti:
-        elenco.append("c'è un finestrino aperto")
+        voci.append("un finestrino aperto")
     if s.baule_aperto:
-        elenco.append("il baule è aperto")
-    if s.chiusa is False and not s.in_movimento:
-        elenco.append("non è chiusa a chiave")
+        voci.append("il baule aperto")
     if s.gomme_anomale:
         ruote = s.gomme_anomale
         if len(ruote) == 1:
-            elenco.append("la gomma %s ha una pressione anomala" % ruote[0])
+            voci.append("una pressione anomala sulla gomma %s" % ruote[0])
         else:
-            elenco.append("le gomme %s hanno una pressione anomala" % _elenco(ruote))
-    return elenco
+            voci.append("una pressione anomala sulle gomme %s" % _elenco(ruote))
+    return voci
+
+
+def _non_chiusa(s):
+    # Aperta mentre si guida e' normale: conta solo a veicolo fermo.
+    return s.chiusa is False and not s.in_movimento
+
+
+def anomalie(s):
+    return _cose_che_ha(s) + (["non chiusa a chiave"] if _non_chiusa(s) else [])
 
 
 def _elenco(voci):
     return voci[0] if len(voci) == 1 else ", ".join(voci[:-1]) + " e " + voci[-1]
 
 
-def frase_anomalie(s):
-    elenco = anomalie(s)
-    if not elenco:
-        if s.in_movimento:
-            return "Nessuna anomalia: l'auto è in movimento, portiere e finestrini chiusi."
-        if s.chiusa:
-            return "Tutto a posto: l'auto è chiusa a chiave, con finestrini e baule chiusi."
-        return "Tutto a posto: portiere, finestrini e baule sono chiusi."
-    testo = _elenco(elenco)
-    return "Attenzione: " + testo + "."
+def frase_clima(s):
+    """Solo se il clima e' acceso: non e' un'anomalia, ma e' bene saperlo."""
+    if not s.clima_acceso:
+        return ""
+    if s.temp_clima:
+        return "Il clima è acceso a %d gradi." % s.temp_clima
+    return "Il clima è acceso."
 
 
-def frase_riepilogo(s, luoghi, indirizzo):
-    anom = frase_anomalie(s)
-    return " ".join([frase_batteria(s), frase_posizione(s, luoghi, indirizzo), anom])
+def frase_anomalie(s, nome=None, sottinteso=False):
+    """
+    sottinteso=True: il soggetto non si ripete ("Tutto a posto: è chiusa a
+    chiave…"), per il riepilogo, dove l'auto e' gia' stata nominata.
+    """
+    chi = "" if sottinteso else soggetto(nome) + " "
+    clima = frase_clima(s)
+    testo = _frase_anomalie(s, chi)
+    return testo + (" " + clima if clima else "")
+
+
+def _frase_anomalie(s, chi):
+    voci = _cose_che_ha(s)
+    if voci:
+        frase = "Attenzione: %sha %s" % (chi, _elenco(voci))
+        if _non_chiusa(s):
+            frase += ", e non è chiusa a chiave"
+        return frase + "."
+    if _non_chiusa(s):
+        return "Attenzione: %snon è chiusa a chiave." % chi
+    if s.in_movimento:
+        return "Nessuna anomalia: %sè in movimento, con portiere e finestrini chiusi." % chi
+    if s.chiusa:
+        return "Tutto a posto: %sè chiusa a chiave, con finestrini e baule chiusi." % chi
+    return "Tutto a posto: portiere, finestrini e baule sono chiusi."
+
+
+def frase_riepilogo(s, luoghi, indirizzo, nome=None):
+    # Il nome solo nella prima frase: ripeterlo tre volte suonerebbe strano.
+    return " ".join([frase_posizione(s, luoghi, indirizzo, nome), frase_batteria(s),
+                     frase_anomalie(s, nome, sottinteso=True)])
 
 
 def con_eta(frase, s, adesso_ms=None):
