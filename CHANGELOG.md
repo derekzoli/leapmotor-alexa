@@ -1,5 +1,12 @@
 # Note degli aggiornamenti
 
+## 1.2.2 — 2 ottobre 2026
+
+- **Nome della skill in italiano e spagnolo: `my lipcar`.** Un Echo in italiano o in spagnolo trascrive "leapcar" come "lipcar", quindi a voce il nome non veniva riconosciuto (scritto nell'app sì). A voce si dice sempre "my leapcar"; in inglese il nome resta `my leapcar`.
+  Per aggiornare: per ciascuna delle due lingue, *Build → Invocations* → `my lipcar` → **Save**, poi **Build skill** (oppure ricarica `it-IT.json` ed `es-ES.json`). Quando provi **scrivendo** nella scheda Test o nell'app Alexa, in italiano e spagnolo usa `my lipcar`.
+- ⚠️ **Se ci sono problemi di interpretazione della pronuncia, si consiglia di cambiare l'invocazione.** Il nome funziona a voce solo se coincide con come l'Echo trascrive quello che dici, e la trascrizione può variare con la lingua dell'Echo e con la pronuncia. Se "my leapcar" non viene riconosciuto, guarda nella cronologia vocale (app Alexa → *Altro → Impostazioni → Privacy Alexa → Rivedi la cronologia vocale*) come l'Echo lo scrive e usa proprio quella grafia come nome di quella lingua.
+- Guide nelle tre lingue: il consiglio qui sopra in evidenza al passo 7 e una nuova riga nella tabella dei problemi.
+
 ## 1.2.1 — 30 settembre 2026
 
 - **Guide di installazione in inglese e spagnolo**: [README.en.md](README.en.md) e [README.es.md](README.es.md), con le risposte e i messaggi d'errore che Alexa dice davvero in quella lingua.

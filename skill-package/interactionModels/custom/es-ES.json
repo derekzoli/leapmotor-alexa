@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "my leapcar",
+      "invocationName": "my lipcar",
       "intents": [
         {
           "name": "BatteriaIntent",

@@ -137,7 +137,7 @@ El modelo de voz es la lista de frases que Alexa tiene que reconocer. Está en l
 
 ✅ **Listo cuando** la compilación termina bien y, en cada idioma, en **Intents** a la izquierda aparecen **BatteriaIntent**, **PosizioneIntent**, **AnomalieIntent**, **RiepilogoIntent**, **ChiudiAutoIntent**, **ChiudiFinestriniIntent**, **ClimaIntent**, **RiscaldamentoIntent**, **RaffreddamentoIntent**, **SpegniClimaIntent**. (Los nombres están en italiano: es normal.)
 
-El nombre de la skill, **"my leapcar"**, ya está en los archivos: no hace falta configurarlo a mano.
+El nombre de la skill ya está en los archivos: no hace falta configurarlo a mano. Siempre se dice **"my leapcar"**; en los archivos en español e italiano, sin embargo, está escrito **`my lipcar`**, porque un Echo en español o en italiano transcribe así "leapcar" (mira *El nombre de la skill*).
 
 ---
 
@@ -189,15 +189,19 @@ El nombre de la skill, **"my leapcar"**, ya está en los archivos: no hace falta
 2. En el recuadro escribe, **sin "Alexa"** delante:
 
    ```
-   pregunta a my leapcar cuánta batería tiene
+   pregunta a my lipcar cuánta batería tiene
    ```
 
+   Cuando **escribes**, en español usa `my lipcar`, es decir, el nombre tal como lo transcribe el Echo. Por voz dices "my leapcar".
+
    Tiene que responder con la batería y la autonomía.
-3. Prueba también *abre my leapcar*, *pregunta a my leapcar si está todo en orden* y, si has activado los comandos, *pide a my leapcar que cierre el coche*: si ya está cerrado te lo dice y no envía nada, así que es la prueba más inofensiva.
-4. Para otros idiomas, elige el idioma en el menú junto a *Development* y escribe por ejemplo `ask my leapcar how much charge it has` o `chiedi a my leapcar quanto è carica`.
+3. Prueba también *abre my lipcar*, *pregunta a my lipcar si está todo en orden* y, si has activado los comandos, *pide a my lipcar que cierre el coche*: si ya está cerrado te lo dice y no envía nada, así que es la prueba más inofensiva.
+4. Para otros idiomas, elige el idioma en el menú junto a *Development* y escribe por ejemplo `ask my leapcar how much charge it has` o `chiedi a my lipcar quanto è carica` (en italiano se escribe `my lipcar`).
 5. Ahora pruébala por voz en un Echo. No tienes que activar nada: las skills en desarrollo ya están activas en tu cuenta (en la app Alexa: *Más → Skills y juegos → Tus skills → Desarrollo*).
 
 Un Echo responde en **su** idioma: para usar la skill en otro idioma, el Echo tiene que estar configurado en él (app Alexa → *Dispositivos* → tu Echo → *Idioma*).
+
+> 💡 **¿Escrito funciona pero por voz no?** Es un problema de interpretación de la pronunciación, no de la skill: el Echo transcribe el nombre de forma distinta a como está escrito. **Cambia el nombre de invocación** y escríbelo exactamente como lo transcribe tu Echo: lo ves en el historial de voz (app Alexa → *Más → Configuración → Privacidad de Alexa → Revisar el historial de voz*). Detalles en [El nombre de la skill](#el-nombre-de-la-skill).
 
 ✅ **¡Listo!** Si algo no responde como esperabas, mira [Si algo falla](#si-algo-falla).
 
@@ -266,6 +270,8 @@ Añadir idiomas (paso 5a) se hace una sola vez.
 
 "my leapcar" es el nombre con el que llamas a la skill (*invocation name*). Se cambia en **Build → Invocations → Skill Invocation Name**, **en cada idioma** (la consola no lo copia de uno a otro), y luego **Build skill**. Reglas aprendidas sobre la marcha:
 
+- **el nombre se escribe como lo transcribe el Echo de ese idioma.** Escrito en la app Alexa siempre funciona, porque el texto coincide; por voz solo funciona si la transcripción coincide con el nombre. Un Echo en español o en italiano oye "leapcar" como "lipcar": por eso `es-ES.json` e `it-IT.json` usan `my lipcar`, mientras que en inglés sigue `my leapcar`. Si tu Echo lo transcribe de otra forma, **cambia el nombre de invocación** para que coincida. Para ver cómo lo transcribe: app Alexa → *Más → Configuración → Privacidad de Alexa → Revisar el historial de voz*;
+
 - **al menos dos palabras**, todo en minúsculas;
 - **escritas como se pronuncian**: una palabra inventada cuya ortografía no coincide con cómo suena no se reconoce;
 - **nada de nombres de famosos**: la skill puede perder frente a su música («Alexa, abre…»);
@@ -292,6 +298,7 @@ Todos consultarán **tu** coche. Quien tenga su propio Leapmotor tiene que insta
 | Build: *"Interaction Model does not include Custom Intents"* | Uno de los idiomas de la skill no tiene modelo: cárgale su `.json` (paso 5b) y vuelve a hacer **Build skill**. |
 | Import Code: *"Your archive's root folder does not contain a lambda folder"* | El zip contiene archivos sueltos: comprime la **carpeta** `lambda` (paso 3). |
 | Alexa: *«Lo siento, no lo sé»* o parecido | No reconoce el nombre de la skill: modelo sin compilar (**Build skill**), pruebas sin activar (*Development*) o un nombre poco adecuado (mira *El nombre de la skill*). |
+| Escrito en la app Alexa funciona, **por voz no** | El Echo transcribe el nombre de otra forma. Mira cómo lo escribe en el historial de voz (app Alexa → *Más → Configuración → Privacidad de Alexa → Revisar el historial de voz*) y usa exactamente esa forma como nombre en ese idioma (mira *El nombre de la skill*). |
 | Alexa responde con la ayuda a cualquier pregunta | Al modelo de ese idioma le faltan los intents: vuelve a cargar su `.json` y compila. |
 | *«Ha habido un problema con la respuesta de la skill solicitada»* | El código no arranca. Mira los registros: pestaña Code → **CloudWatch Logs**, región *Europe (Ireland)*, el log stream más reciente. |
 | En los registros: `urllib3 v2 only supports OpenSSL 1.1.1+` | `requirements.txt` antiguo: tiene que contener `urllib3<2` (el Python de Alexa-hosted usa OpenSSL 1.0.2). |

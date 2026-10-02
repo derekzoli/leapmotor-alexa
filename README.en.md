@@ -137,7 +137,7 @@ The voice model is the list of phrases Alexa must recognise. It lives in the `.j
 
 ✅ **Done when** the build succeeds and, in every language, **Intents** on the left lists **BatteriaIntent**, **PosizioneIntent**, **AnomalieIntent**, **RiepilogoIntent**, **ChiudiAutoIntent**, **ChiudiFinestriniIntent**, **ClimaIntent**, **RiscaldamentoIntent**, **RaffreddamentoIntent**, **SpegniClimaIntent**. (The names are Italian: that's expected.)
 
-The skill's name, **"my leapcar"**, is already in the files: you don't have to set it by hand.
+The skill's name is already in the files: you don't have to set it by hand. You always say **"my leapcar"**; in the Italian and Spanish files, though, it's written **`my lipcar`**, because an Echo in Italian or Spanish transcribes "leapcar" that way (see *The skill's name*).
 
 ---
 
@@ -194,10 +194,12 @@ The skill's name, **"my leapcar"**, is already in the files: you don't have to s
 
    It should answer with the battery level and the range.
 3. Also try *open my leapcar*, *ask my leapcar if everything is OK* and, if you switched commands on, *ask my leapcar to lock the car*: if it's already locked it just tells you and sends nothing, so it's the safest test.
-4. For other languages, pick the language from the menu next to *Development* and type e.g. `chiedi a my leapcar quanto è carica` or `pregunta a my leapcar dónde está el coche`.
+4. For other languages, pick the language from the menu next to *Development* and type e.g. `chiedi a my lipcar quanto è carica` or `pregunta a my lipcar dónde está el coche` (Italian and Spanish use the `my lipcar` spelling).
 5. Now try it by voice on an Echo. You don't need to enable anything: skills in development are already active on your account (in the Alexa app: *More → Skills & Games → Your Skills → Dev*).
 
 An Echo answers in **its own** language: to use the skill in another language, the Echo must be set to it (Alexa app → *Devices* → your Echo → *Language*).
+
+> 💡 **Typing works but speaking doesn't?** It's a pronunciation problem, not a skill problem: the Echo transcribes the name differently from how it's written. **Change the invocation name** and write it exactly as your Echo transcribes it: you can see it in the voice history (Alexa app → *More → Settings → Alexa Privacy → Review Voice History*). Details in [The skill's name](#the-skills-name).
 
 ✅ **Done!** If something doesn't answer as expected, see [Troubleshooting](#troubleshooting).
 
@@ -266,6 +268,8 @@ Adding languages (step 5a) is done only once.
 
 "my leapcar" is the name you use to call the skill (*invocation name*). You change it in **Build → Invocations → Skill Invocation Name**, **in every language** (the console doesn't copy it from one to another), then **Build skill**. Rules learned the hard way:
 
+- **write the name the way that language's Echo transcribes it.** Typing in the Alexa app always works, because the text matches; by voice it only works if the transcription matches the name. An Echo in Italian or Spanish hears "leapcar" as "lipcar", so `it-IT.json` and `es-ES.json` use `my lipcar`, while English keeps `my leapcar`. If your Echo transcribes it differently again, **change the invocation name** to match. To see how the Echo transcribes you: Alexa app → *More → Settings → Alexa Privacy → Review Voice History*;
+
 - **at least two words**, all lowercase;
 - **spelled the way they're pronounced**: a made-up word whose spelling doesn't match its sound isn't recognised;
 - **no famous people's names**: the skill may lose to their music ("Alexa, open…");
@@ -292,6 +296,7 @@ Everyone will query **your** car. Anyone with their own Leapmotor must install t
 | Build: *"Interaction Model does not include Custom Intents"* | One of the skill's languages has no model: load its `.json` (step 5b), then **Build skill** again. |
 | Import Code: *"Your archive's root folder does not contain a lambda folder"* | The zip contains loose files: compress the `lambda` **folder** (step 3). |
 | Alexa: *"Sorry, I don't know that"* or similar | It doesn't recognise the skill's name: model not built (**Build skill**), testing not enabled (*Development*), or an unsuitable name (see *The skill's name*). |
+| Typing it in the Alexa app works, **saying it doesn't** | The Echo transcribes the name differently. Check how it writes it in the voice history (Alexa app → *More → Settings → Alexa Privacy → Review Voice History*) and use exactly that spelling as the name for that language (see *The skill's name*). |
 | Alexa answers every question with the help text | That language's model is missing the intents: reload its `.json` and build again. |
 | *"There was a problem with the requested skill's response"* | The code doesn't start. Check the logs: Code tab → **CloudWatch Logs**, region *Europe (Ireland)*, latest log stream. |
 | In the logs: `urllib3 v2 only supports OpenSSL 1.1.1+` | Old `requirements.txt`: it must contain `urllib3<2` (Alexa-hosted Python uses OpenSSL 1.0.2). |
